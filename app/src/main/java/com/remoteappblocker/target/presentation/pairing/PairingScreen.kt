@@ -1,4 +1,4 @@
-package com.remoteappblocker.target.presentation.pairing
+﻿package com.remoteappblocker.target.presentation.pairing
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -68,7 +68,6 @@ fun PairingScreen(
     pairingInfo: PairingInfo,
     isPaired: Boolean,
     onRefreshCode: () -> Unit,
-    onSimulatePairSuccess: () -> Unit,
     onContinueToApp: () -> Unit
 ) {
     var timeLeftSeconds by remember(pairingInfo.expiresAt) {
@@ -294,19 +293,18 @@ fun PairingScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Demo Pair button for offline testing
-                OutlinedButton(
-                    onClick = onSimulatePairSuccess,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
+                // Secure instruction banner - child cannot bypass
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Slate700.copy(alpha = 0.35f)
                 ) {
                     Text(
-                        text = "Instant Pair (Parental Demo Mode)",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = PrimaryBlue,
-                        fontWeight = FontWeight.Medium
+                        text = "Enter this 6-digit code on the Parent Web Portal to link this phone. This app cannot be accessed until linked.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Slate400,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(14.dp)
                     )
                 }
             }

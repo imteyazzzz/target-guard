@@ -1,4 +1,4 @@
-package com.remoteappblocker.target
+﻿package com.remoteappblocker.target
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -179,13 +179,6 @@ class MainActivity : ComponentActivity() {
                                     val info = pairingRepo.generateOrGetPairingInfo()
                                     pairingInfo = info
                                     pairingRepo.registerDeviceInSupabase()
-                                }
-                            },
-                            onSimulatePairSuccess = {
-                                scope.launch {
-                                    pairingRepo.confirmPaired("Admin (Parent)")
-                                    isDevicePaired = true
-                                    currentScreen.value = ScreenState.WIZARD
                                 }
                             },
                             onContinueToApp = {

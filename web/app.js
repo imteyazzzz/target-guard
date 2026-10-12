@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Target Guard — Parent Web Portal
  * Realtime Remote Control & App Blocker Dashboard
  * Dual Engine: Supabase JS Client v2 + Native REST Fetch Fallback (Zero Collisions, Zero Dummy Data)
@@ -81,14 +81,44 @@
     }
   }
 
+  // 4. DATA LOADING & LINK STATUS EVALUATION
   // =============================================================================
-  // 4. DATA LOADING
-  // =============================================================================
+  async function fetchPairingCodes() {
+    try {
+      if (supabaseClient) {
+        const res = await supabaseClient
+          .from('pairing_codes')
+          .select('device_id, code, used, created_at')
+          .order('created_at', { ascending: false });
+        if (!res.error && res.data) return res.data;
+      }
+      return await apiFetch('pairing_codes?select=device_id,code,used,created_at&order=created_at.desc');
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function processDevicesWithPairingStatus(devices, codes) {
+    const codesList = Array.isArray(codes) ? codes : [];
+    return (Array.isArray(devices) ? devices : []).map(dev => {
+      const devCodes = codesList.filter(c => c.device_id === dev.id);
+      const latestCode = devCodes[0] || null;
+      // Phone is actively Linked only if its pairing code is confirmed used, and not pending a new unused code
+      const hasUsedCode = devCodes.some(c => c.used === true);
+      const hasPendingNewCode = latestCode ? (latestCode.used === false) : false;
+      const isLinked = hasUsedCode && !hasPendingNewCode;
+      return {
+        ...dev,
+        isLinked,
+        latestPairingCode: latestCode ? latestCode.code : null
+      };
+    });
+  }
+
   async function loadDevices() {
     try {
       let data = null;
 
-      // 1. Try Supabase JS Client
       if (supabaseClient) {
         try {
           const res = await supabaseClient
@@ -101,17 +131,18 @@
         }
       }
 
-      // 2. REST fetch fallback
       if (!data) {
         data = await apiFetch('devices?select=*&order=last_seen_at.desc');
       }
 
-      state.devices = Array.isArray(data) ? data : [];
-      console.log(`📱 Found ${state.devices.length} real devices in database:`, state.devices);
+      const codes = await fetchPairingCodes();
+      state.devices = processDevicesWithPairingStatus(data, codes);
+      console.log('📱 Real devices with link status:', state.devices);
 
       if (state.devices.length > 0) {
         if (!state.currentDeviceId || !state.devices.find(d => d.id === state.currentDeviceId)) {
-          state.currentDeviceId = state.devices[0].id;
+          const linkedDev = state.devices.find(d => d.isLinked);
+          state.currentDeviceId = linkedDev ? linkedDev.id : state.devices[0].id;
         }
       } else {
         state.currentDeviceId = null;
@@ -140,10 +171,12 @@
         data = await apiFetch('devices?select=*&order=last_seen_at.desc');
       }
       if (Array.isArray(data)) {
-        state.devices = data;
+        const codes = await fetchPairingCodes();
+        state.devices = processDevicesWithPairingStatus(data, codes);
         if (state.devices.length > 0) {
           if (!state.currentDeviceId || !state.devices.find(d => d.id === state.currentDeviceId)) {
-            state.currentDeviceId = state.devices[0].id;
+            const linkedDev = state.devices.find(d => d.isLinked);
+            state.currentDeviceId = linkedDev ? linkedDev.id : state.devices[0].id;
             loadDeviceData(state.currentDeviceId);
           }
         } else {
@@ -166,7 +199,7 @@
     if (state.devices.length === 0) {
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = 'No Devices Paired';
+      opt.textContent = 'No Devices Found';
       sel.appendChild(opt);
       updateDeviceStatusPill();
       return;
@@ -175,7 +208,9 @@
     state.devices.forEach(dev => {
       const opt = document.createElement('option');
       opt.value = dev.id;
-      opt.textContent = `${dev.name || dev.model || 'Target Phone'} (${dev.model || 'Android'})`;
+      const statusIcon = dev.isLinked ? '🟢' : '⚠️';
+      const statusLabel = dev.isLinked ? 'Linked' : 'Unlinked';
+      opt.textContent = `${statusIcon} ${dev.name || dev.model || 'Target Phone'} (${statusLabel})`;
       sel.appendChild(opt);
     });
 
@@ -193,12 +228,25 @@
     const cur = getCurrentDevice();
     if (!cur) {
       pill.className = 'status-pill offline';
+      pill.style.background = '';
+      pill.style.color = '';
       pill.innerHTML = '<span class="offline-dot"></span> Not Connected';
       return;
     }
 
-    // A phone is truly ONLINE only if its live heartbeat was reported within the last 60 seconds (1 minute).
-    // If phone unpairs, turns off, or stops sync, it automatically flips to Offline without manual refresh.
+    if (!cur.isLinked) {
+      pill.className = 'status-pill offline';
+      pill.style.background = 'rgba(245, 158, 11, 0.15)';
+      pill.style.color = '#f59e0b';
+      pill.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+      pill.innerHTML = '<span class="offline-dot" style="background:#f59e0b; box-shadow: 0 0 8px #f59e0b;"></span> Unlinked ⚠️';
+      return;
+    } else {
+      pill.style.background = '';
+      pill.style.color = '';
+      pill.style.borderColor = '';
+    }
+
     const ONLINE_THRESHOLD_MS = 60 * 1000;
     const lastSeenTime = cur.last_seen_at ? new Date(cur.last_seen_at).getTime() : 0;
     const diffMs = lastSeenTime > 0 ? (Date.now() - lastSeenTime) : Infinity;
@@ -206,7 +254,7 @@
 
     if (isOnline) {
       pill.className = 'status-pill online';
-      pill.innerHTML = '<span class="pulse-dot"></span> Online';
+      pill.innerHTML = '<span class="pulse-dot"></span> Online & Protected';
     } else {
       pill.className = 'status-pill offline';
       pill.innerHTML = '<span class="offline-dot"></span> Offline';
@@ -813,6 +861,90 @@
       setupRealtimeSubscriptions();
     } else {
       renderEmptyDashboard();
+    }
+  };
+
+  window.submitQuickLink = async function() {
+    const input = document.getElementById('quickLinkCodeInput');
+    const errBox = document.getElementById('quickLinkError');
+    const btn = document.getElementById('quickLinkSubmitBtn');
+    const code = input ? input.value.trim() : '';
+
+    if (!code || code.length !== 6) {
+      if (errBox) {
+        errBox.textContent = 'Kripya phone screen par dikh raha 6-digit code enter karein.';
+        errBox.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Verifying & Linking...</span>';
+    }
+    if (errBox) errBox.classList.add('hidden');
+
+    try {
+      let matchedCodeRow = null;
+      if (supabaseClient) {
+        const res = await supabaseClient
+          .from('pairing_codes')
+          .select('*')
+          .eq('code', code)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (!res.error && res.data && res.data.length > 0) matchedCodeRow = res.data[0];
+      }
+      if (!matchedCodeRow) {
+        const rows = await apiFetch(`pairing_codes?code=eq.${code}&order=created_at.desc&limit=1`);
+        if (Array.isArray(rows) && rows.length > 0) matchedCodeRow = rows[0];
+      }
+
+      if (matchedCodeRow) {
+        if (supabaseClient) {
+          await supabaseClient
+            .from('pairing_codes')
+            .update({ used: true })
+            .eq('id', matchedCodeRow.id);
+          await supabaseClient
+            .from('devices')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('id', matchedCodeRow.device_id);
+        } else {
+          await apiFetch(`pairing_codes?id=eq.${matchedCodeRow.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ used: true })
+          });
+          await apiFetch(`devices?id=eq.${matchedCodeRow.device_id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ last_seen_at: new Date().toISOString() })
+          });
+        }
+
+        state.currentDeviceId = matchedCodeRow.device_id;
+        await loadDevices();
+        await loadDeviceData(matchedCodeRow.device_id);
+        setupRealtimeSubscriptions();
+
+        showToast('🎉 Phone successfully linked & protection active!');
+        if (input) input.value = '';
+      } else {
+        if (errBox) {
+          errBox.textContent = 'Galat ya expired code. Kripya phone screen par naya code refresh karke dekhein.';
+          errBox.classList.remove('hidden');
+        }
+      }
+    } catch (e) {
+      console.error('Submit quick link error:', e);
+      if (errBox) {
+        errBox.textContent = 'Linking error: ' + (e.message || 'Please retry');
+        errBox.classList.remove('hidden');
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔗 Link & Activate Phone</span>';
+      }
     }
   };
 

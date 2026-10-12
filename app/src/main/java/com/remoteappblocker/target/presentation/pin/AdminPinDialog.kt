@@ -48,9 +48,8 @@ import com.remoteappblocker.target.presentation.theme.Slate800
 @Composable
 fun AdminPinDialog(
     deviceId: String = "",
-    masterPin: String = "1234",
     title: String = "Admin Authentication",
-    subtitle: String = "Enter 1-minute Admin PIN from Parent Portal",
+    subtitle: String = "Enter 1-minute Dynamic Admin PIN from Parent Portal",
     onDismissRequest: () -> Unit,
     onPinVerified: () -> Unit
 ) {
@@ -154,8 +153,7 @@ fun AdminPinDialog(
                             if (newPin.length == 4) {
                                 val isValid = com.remoteappblocker.target.domain.pin.DynamicAdminPinHelper.isValidPin(
                                     enteredPin = newPin,
-                                    deviceId = deviceId,
-                                    masterPin = masterPin
+                                    deviceId = deviceId
                                 )
                                 if (isValid) {
                                     onPinVerified()

@@ -1,0 +1,22 @@
+package com.remoteappblocker.target.service
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+
+class BootReceiver : BroadcastReceiver() {
+
+    companion object {
+        private const val TAG = "BootReceiver"
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val action = intent.action
+        Log.i(TAG, "Received broadcast action: $action")
+        if (Intent.ACTION_BOOT_COMPLETED == action || "android.intent.action.QUICKBOOT_POWERON" == action) {
+            Log.i(TAG, "Device booted. Starting SyncForegroundService...")
+            SyncForegroundService.startService(context)
+        }
+    }
+}

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Target Guard — Parent Control Center</title>
+  <meta name="description" content="Remote Parental Control & App Blocker Dashboard powered by Supabase Realtime">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Supabase JS Client v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <div class="brand-logo">
+        <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-info">
+        <h1 class="brand-title">Target Guard</h1>
+        <span class="brand-subtitle">Parental Control Portal</span>
+      </div>
+    </div>
+
+    <div class="nav-center">
+      <div class="device-selector-wrapper">
+        <svg class="device-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+          <line x1="12" y1="18" x2="12.01" y2="18"/>
+        </svg>
+        <select id="deviceSelector" class="device-select" aria-label="Select Target Device">
+          <option value="demo-device-1">Child's Phone (Galaxy S23)</option>
+        </select>
+        <span id="deviceStatusPill" class="status-pill online">
+          <span class="pulse-dot"></span> Online
+        </span>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <div id="realtimeStatus" class="connection-badge connected">
+        <span class="conn-dot"></span> Realtime Active
+      </div>
+      <button id="openPairModalBtn" class="btn btn-primary btn-sm">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Pair New Device
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Container -->
+  <main class="dashboard-container">
+
+    <!-- KPI / Quick Stats Row -->
+    <section class="kpi-grid">
+      <!-- Device Health Card -->
+      <div class="kpi-card" id="cardDeviceHealth">
+        <div class="kpi-header">
+          <span class="kpi-label">Device Health</span>
+          <div class="battery-indicator" id="batteryWrapper">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="6" width="18" height="12" rx="2"/>
+              <line x1="23" y1="11" x2="23" y2="13"/>
+            </svg>
+            <span id="batteryPctText">88%</span>
+          </div>
+        </div>
+        <div class="kpi-body">
+          <div class="device-primary-name" id="deviceModelText">Samsung Galaxy S23</div>
+          <div class="device-detail-sub" id="lastSeenText">Last active: Just now</div>
+        </div>
+        <div class="kpi-footer">
+          <span id="accessibilityBadge" class="badge badge-success">Accessibility Guard ON</span>
+        </div>
+      </div>
+
+      <!-- Active Rules Card -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Active Restrictions</span>
+          <span class="kpi-icon-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+          </span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-number" id="activeRulesCount">4</div>
+          <div class="device-detail-sub">Applications restricted</div>
+        </div>
+        <div class="kpi-footer">
+          <span class="rule-sync-tag">⚡ Applied &lt; 5s SLA</span>
+        </div>
+      </div>
+
+      <!-- Block Events Intercepted -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Interceptions Today</span>
+          <span class="kpi-icon-badge alert">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-number text-alert" id="interceptedCount">12</div>
+          <div class="device-detail-sub">Launch attempts prevented</div>
+        </div>
+        <div class="kpi-footer">
+          <span class="live-tag"><span class="pulse-dot-red"></span> Live logging</span>
+        </div>
+      </div>
+
+      <!-- Emergency Quick Control Card -->
+      <div class="kpi-card focus-mode-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Instant Focus Mode</span>
+          <span class="hotkey-badge">Quick Lock</span>
+        </div>
+        <div class="kpi-body">
+          <p class="focus-desc">One click blocks all social media, streaming and games immediately.</p>
+        </div>
+        <div class="kpi-footer">
+          <button id="toggleFocusModeBtn" class="btn btn-focus">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span id="focusBtnText">Activate Focus Mode</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="content-tabs">
+      <button class="tab-btn active" data-tab="tabApps">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        App Blocking & Rules
+        <span class="tab-badge" id="appsCountBadge">18</span>
+      </button>
+
+      <button class="tab-btn" data-tab="tabFeed">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Live Block Activity
+        <span class="tab-badge pulse" id="feedCountBadge">Live</span>
+      </button>
+
+      <button class="tab-btn" data-tab="tabDevice">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Device Health & Protection
+      </button>
+    </nav>
+
+    <!-- Tab 1: App Blocker List -->
+    <section id="tabApps" class="tab-pane active">
+      <div class="pane-toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="appSearchInput" placeholder="Search installed applications...">
+        </div>
+
+        <div class="filter-group">
+          <button class="filter-chip active" data-filter="all">All Apps</button>
+          <button class="filter-chip" data-filter="blocked">Blocked Only</button>
+          <button class="filter-chip" data-filter="scheduled">Scheduled</button>
+          <button class="filter-chip" data-filter="limited">Time Limited</button>
+        </div>
+
+        <button id="syncRefreshBtn" class="btn btn-secondary btn-sm" title="Refresh Apps List">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"/>
+            <path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Sync Now
+        </button>
+      </div>
+
+      <!-- Applications Table / Grid -->
+      <div class="apps-table-container">
+        <div class="table-header-row">
+          <div class="col-app">Application</div>
+          <div class="col-mode">Current Mode</div>
+          <div class="col-schedule">Schedule / Time Window</div>
+          <div class="col-message">Custom Message</div>
+          <div class="col-toggle">Instant Block</div>
+          <div class="col-actions">Settings</div>
+        </div>
+
+        <div id="appsListContainer" class="apps-list">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Realtime Activity Feed -->
+    <section id="tabFeed" class="tab-pane">
+      <div class="feed-header-bar">
+        <div>
+          <h2 class="pane-title">Realtime Block Telemetry</h2>
+          <p class="pane-desc">Live log of blocked app attempts received from target device</p>
+        </div>
+        <button id="clearLogsBtn" class="btn btn-secondary btn-sm">Clear Stream</button>
+      </div>
+
+      <div class="timeline-container">
+        <div id="activityTimelineList" class="timeline-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: Device Health & Management -->
+    <section id="tabDevice" class="tab-pane">
+      <div class="device-card-grid">
+        <div class="card glass-card">
+          <h3 class="card-title">Security & Permission Status</h3>
+          <p class="card-desc">Current defense layers active on the controlled phone.</p>
+          <div class="health-checklist">
+            <div class="check-item">
+              <span class="check-icon success">✓</span>
+              <div class="check-info">
+                <strong>Accessibility Service</strong>
+                <p>Detects app launch events in &lt;1ms</p>
+              </div>
+              <span class="status-tag active">ACTIVE</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon success">✓</span>
+              <div class="check-info">
+                <strong>System Overlay (Alert Window)</strong>
+                <p>Displays non-bypassable full-screen block card</p>
+              </div>
+              <span class="status-tag active">ACTIVE</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon success">✓</span>
+              <div class="check-info">
+                <strong>Device Administrator (Anti-Uninstall)</strong>
+                <p>Blocks uninstallation without Admin PIN</p>
+              </div>
+              <span class="status-tag active">ACTIVE</span>
+            </div>
+            <div class="check-item">
+              <span class="check-icon success">✓</span>
+              <div class="check-info">
+                <strong>Persistent Foreground Service</strong>
+                <p>Maintains Supabase Realtime channel</p>
+              </div>
+              <span class="status-tag active">RUNNING</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <h3 class="card-title">Device Remote Administration</h3>
+          <p class="card-desc">Safety configuration and unpair options.</p>
+          <div class="admin-action-box">
+            <div class="admin-item">
+              <div>
+                <strong>Default Admin PIN</strong>
+                <p>Required on target device to unpair or disable protection</p>
+              </div>
+              <div class="pin-display">1234</div>
+            </div>
+            <hr class="divider">
+            <div class="danger-zone">
+              <div>
+                <strong class="text-alert">Unpair Device</strong>
+                <p>Removes all blocking rules from this phone.</p>
+              </div>
+              <button id="unpairDeviceBtn" class="btn btn-danger btn-sm">Unpair Phone</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: Pair Device -->
+  <div id="pairModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="icon-circle">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-title">Pair Target Phone</h2>
+            <p class="modal-subtitle">Enter the 6-digit code shown on the child's screen</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closePairModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="input-group">
+          <label for="pairingCodeInput">6-Digit Pairing Code</label>
+          <input type="text" id="pairingCodeInput" maxlength="6" placeholder="e.g. 849201" class="pairing-input">
+          <span class="helper-text">Look at Target Guard app on the phone to find this code</span>
+        </div>
+
+        <div class="input-group">
+          <label for="deviceNicknameInput">Device Nickname (Optional)</label>
+          <input type="text" id="deviceNicknameInput" placeholder="e.g. Rohan's Phone" class="form-input">
+        </div>
+
+        <div id="pairErrorMessage" class="error-banner hidden"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelPairBtn" class="btn btn-secondary">Cancel</button>
+        <button id="submitPairBtn" class="btn btn-primary">
+          <span>Connect & Link Phone</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Configure Rule -->
+  <div id="ruleModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="icon-circle rule-icon-circle">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-title" id="ruleModalAppTitle">Configure Instagram</h2>
+            <p class="modal-subtitle" id="ruleModalPackage">com.instagram.android</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeRuleModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Mode Selector -->
+        <div class="input-group">
+          <label>Blocking Mode</label>
+          <div class="mode-tabs">
+            <label class="mode-radio-label">
+              <input type="radio" name="ruleMode" value="block" checked>
+              <span class="mode-pill">Always Blocked</span>
+            </label>
+            <label class="mode-radio-label">
+              <input type="radio" name="ruleMode" value="schedule">
+              <span class="mode-pill">Scheduled Window</span>
+            </label>
+            <label class="mode-radio-label">
+              <input type="radio" name="ruleMode" value="limit">
+              <span class="mode-pill">Daily Limit</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Schedule Options (Hidden unless 'schedule' chosen) -->
+        <div id="scheduleSection" class="conditional-section hidden">
+          <div class="time-range-grid">
+            <div class="input-group">
+              <label for="scheduleStartTime">Block Start Time</label>
+              <input type="time" id="scheduleStartTime" value="22:00" class="form-input">
+            </div>
+            <div class="input-group">
+              <label for="scheduleEndTime">Block End Time</label>
+              <input type="time" id="scheduleEndTime" value="06:00" class="form-input">
+            </div>
+          </div>
+          <span class="helper-text">Supports overnight / midnight wrap-around (e.g., 10 PM to 6 AM)</span>
+
+          <label class="sublabel">Active Days</label>
+          <div class="days-selector">
+            <label class="day-check"><input type="checkbox" name="schedDay" value="2" checked><span>M</span></label>
+            <label class="day-check"><input type="checkbox" name="schedDay" value="3" checked><span>T</span></label>
+            <label class="day-check"><input type="checkbox" name="schedDay" value="4" checked><span>W</span></label>
+            <label class="day-check"><input type="checkbox" name="schedDay" value="5" checked><span>T</span></label>
+            <label class="day-check"><input type="checkbox" name="schedDay" value="6" checked><span>F</span></label>
+            <label class="day-check"><input type="checkbox" name="schedDay" value="7" checked><span>S</span></label>
+            <label class="day-check"><input type="checkbox" name="schedDay" value="1" checked><span>S</span></label>
+          </div>
+        </div>
+
+        <!-- Limit Options (Hidden unless 'limit' chosen) -->
+        <div id="limitSection" class="conditional-section hidden">
+          <div class="input-group">
+            <label for="dailyLimitMinutes">Allowed Daily Minutes</label>
+            <select id="dailyLimitMinutes" class="form-input">
+              <option value="15">15 Minutes</option>
+              <option value="30">30 Minutes</option>
+              <option value="45" selected>45 Minutes</option>
+              <option value="60">1 Hour</option>
+              <option value="90">1.5 Hours</option>
+              <option value="120">2 Hours</option>
+            </select>
+          </div>
+          <span class="helper-text">App is immediately blocked once daily screen time is exhausted.</span>
+        </div>
+
+        <!-- Custom Message -->
+        <div class="input-group">
+          <label for="ruleCustomMessage">Message Displayed to Child</label>
+          <input type="text" id="ruleCustomMessage" value="This app is blocked during study hours by Mom & Dad." class="form-input">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelRuleBtn" class="btn btn-secondary">Cancel</button>
+        <button id="saveRuleBtn" class="btn btn-primary">Save & Apply to Phone</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toastMessage" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

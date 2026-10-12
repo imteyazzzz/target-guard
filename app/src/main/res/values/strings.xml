@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Target Guard</string>
+    <string name="accessibility_service_description">Remote App Blocker Accessibility Service detects and blocks configured apps according to admin rules.</string>
+</resources>

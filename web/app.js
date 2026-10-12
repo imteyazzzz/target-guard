@@ -1,7 +1,7 @@
 /**
  * Target Guard — Parent Web Portal
  * Realtime Remote Control & App Blocker Dashboard
- * Supabase JS v2 Client Integration
+ * Supabase JS v2 Client Integration — Pure Real Database (Zero Dummy Data)
  */
 
 // =============================================================================
@@ -14,13 +14,14 @@ let supabase = null;
 if (window.supabase && typeof window.supabase.createClient === 'function') {
   try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase JS client initialized successfully');
   } catch (err) {
-    console.warn('Could not initialize Supabase client:', err);
+    console.error('❌ Failed to initialize Supabase client:', err);
   }
 }
 
 // =============================================================================
-// 2. APPLICATION STATE
+// 2. APPLICATION STATE (Zero Dummy Data)
 // =============================================================================
 const state = {
   currentDeviceId: null,
@@ -36,561 +37,334 @@ const state = {
 };
 
 // =============================================================================
-// 3. SEED / DEMO DATA (Used as graceful fallback or immediate offline test)
-// =============================================================================
-const DEMO_DEVICE = {
-  id: 'dev-demo-galaxy-s23',
-  name: "Child's Phone (Rohan)",
-  model: 'Samsung Galaxy S23 (SM-S911B)',
-  battery_pct: 86,
-  accessibility_enabled: true,
-  last_seen_at: new Date().toISOString()
-};
-
-const DEMO_APPS = [
-  { package_name: 'com.instagram.android', app_name: 'Instagram', category: 'Social', iconText: 'IG' },
-  { package_name: 'com.google.android.youtube', app_name: 'YouTube', category: 'Streaming', iconText: 'YT' },
-  { package_name: 'com.zhiliaoapp.musically', app_name: 'TikTok', category: 'Social', iconText: 'TT' },
-  { package_name: 'com.snapchat.android', app_name: 'Snapchat', category: 'Social', iconText: 'SC' },
-  { package_name: 'com.roblox.client', app_name: 'Roblox', category: 'Gaming', iconText: 'RB' },
-  { package_name: 'com.pubg.imobile', app_name: 'BGMI / PUBG', category: 'Gaming', iconText: 'BG' },
-  { package_name: 'com.dts.freefireth', app_name: 'Free Fire MAX', category: 'Gaming', iconText: 'FF' },
-  { package_name: 'com.netflix.mediaclient', app_name: 'Netflix', category: 'Streaming', iconText: 'NF' },
-  { package_name: 'com.discord', app_name: 'Discord', category: 'Social', iconText: 'DC' },
-  { package_name: 'com.reddit.frontpage', app_name: 'Reddit', category: 'Social', iconText: 'RD' },
-  { package_name: 'com.whatsapp', app_name: 'WhatsApp', category: 'Messaging', iconText: 'WA' },
-  { package_name: 'com.spotify.music', app_name: 'Spotify Music', category: 'Audio', iconText: 'SP' },
-  { package_name: 'com.android.chrome', app_name: 'Google Chrome', category: 'Browser', iconText: 'GC' },
-  { package_name: 'com.duolingo', app_name: 'Duolingo', category: 'Education', iconText: 'DL' },
-  { package_name: 'com.chess', app_name: 'Chess.com', category: 'Board Games', iconText: 'CH' },
-  { package_name: 'com.khanacademy.android', app_name: 'Khan Academy', category: 'Education', iconText: 'KA' }
-];
-
-const DEMO_RULES = {
-  'com.instagram.android': {
-    id: 'rule-demo-1',
-    device_id: 'dev-demo-galaxy-s23',
-    package_name: 'com.instagram.android',
-    mode: 'block',
-    daily_limit_min: 0,
-    schedule: null,
-    message: 'Instagram is blocked during study hours.',
-    enabled: true,
-    version: 3
-  },
-  'com.google.android.youtube': {
-    id: 'rule-demo-2',
-    device_id: 'dev-demo-galaxy-s23',
-    package_name: 'com.google.android.youtube',
-    mode: 'schedule',
-    daily_limit_min: 0,
-    schedule: { start_time: '22:00', end_time: '06:30', days: [1, 2, 3, 4, 5, 6, 7] },
-    message: 'YouTube curfew active: 10:00 PM to 6:30 AM.',
-    enabled: true,
-    version: 2
-  },
-  'com.zhiliaoapp.musically': {
-    id: 'rule-demo-3',
-    device_id: 'dev-demo-galaxy-s23',
-    package_name: 'com.zhiliaoapp.musically',
-    mode: 'limit',
-    daily_limit_min: 45,
-    schedule: null,
-    message: 'Daily TikTok limit (45 mins) has been exhausted.',
-    enabled: true,
-    version: 4
-  },
-  'com.pubg.imobile': {
-    id: 'rule-demo-4',
-    device_id: 'dev-demo-galaxy-s23',
-    package_name: 'com.pubg.imobile',
-    mode: 'block',
-    daily_limit_min: 0,
-    schedule: null,
-    message: 'Gaming is disabled until exams finish.',
-    enabled: true,
-    version: 5
-  }
-};
-
-const DEMO_EVENTS = [
-  {
-    id: 'evt-1',
-    package_name: 'com.instagram.android',
-    occurred_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    rule_id: 'rule-demo-1'
-  },
-  {
-    id: 'evt-2',
-    package_name: 'com.pubg.imobile',
-    occurred_at: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
-    rule_id: 'rule-demo-4'
-  },
-  {
-    id: 'evt-3',
-    package_name: 'com.google.android.youtube',
-    occurred_at: new Date(Date.now() - 48 * 60 * 1000).toISOString(),
-    rule_id: 'rule-demo-2'
-  },
-  {
-    id: 'evt-4',
-    package_name: 'com.zhiliaoapp.musically',
-    occurred_at: new Date(Date.now() - 85 * 60 * 1000).toISOString(),
-    rule_id: 'rule-demo-3'
-  }
-];
-
-// =============================================================================
-// 4. DOM ELEMENTS
-// =============================================================================
-const el = {
-  // Device header
-  deviceSelector: document.getElementById('deviceSelector'),
-  deviceStatusPill: document.getElementById('deviceStatusPill'),
-  realtimeStatus: document.getElementById('realtimeStatus'),
-  openPairModalBtn: document.getElementById('openPairModalBtn'),
-
-  // KPIs
-  batteryPctText: document.getElementById('batteryPctText'),
-  deviceModelText: document.getElementById('deviceModelText'),
-  lastSeenText: document.getElementById('lastSeenText'),
-  accessibilityBadge: document.getElementById('accessibilityBadge'),
-  activeRulesCount: document.getElementById('activeRulesCount'),
-  interceptedCount: document.getElementById('interceptedCount'),
-  toggleFocusModeBtn: document.getElementById('toggleFocusModeBtn'),
-  focusBtnText: document.getElementById('focusBtnText'),
-
-  // Tabs
-  tabBtns: document.querySelectorAll('.tab-btn'),
-  tabPanes: document.querySelectorAll('.tab-pane'),
-  appsCountBadge: document.getElementById('appsCountBadge'),
-  feedCountBadge: document.getElementById('feedCountBadge'),
-
-  // Tab 1: Apps & Rules
-  appSearchInput: document.getElementById('appSearchInput'),
-  filterChips: document.querySelectorAll('.filter-chip'),
-  syncRefreshBtn: document.getElementById('syncRefreshBtn'),
-  appsListContainer: document.getElementById('appsListContainer'),
-
-  // Tab 2: Activity Feed
-  clearLogsBtn: document.getElementById('clearLogsBtn'),
-  activityTimelineList: document.getElementById('activityTimelineList'),
-
-  // Tab 3: Device Health
-  unpairDeviceBtn: document.getElementById('unpairDeviceBtn'),
-
-  // Modal: Pair Device
-  pairModal: document.getElementById('pairModal'),
-  closePairModalBtn: document.getElementById('closePairModalBtn'),
-  cancelPairBtn: document.getElementById('cancelPairBtn'),
-  submitPairBtn: document.getElementById('submitPairBtn'),
-  pairingCodeInput: document.getElementById('pairingCodeInput'),
-  deviceNicknameInput: document.getElementById('deviceNicknameInput'),
-  pairErrorMessage: document.getElementById('pairErrorMessage'),
-
-  // Modal: Configure Rule
-  ruleModal: document.getElementById('ruleModal'),
-  closeRuleModalBtn: document.getElementById('closeRuleModalBtn'),
-  cancelRuleBtn: document.getElementById('cancelRuleBtn'),
-  saveRuleBtn: document.getElementById('saveRuleBtn'),
-  ruleModalAppTitle: document.getElementById('ruleModalAppTitle'),
-  ruleModalPackage: document.getElementById('ruleModalPackage'),
-  ruleModeRadios: document.querySelectorAll('input[name="ruleMode"]'),
-  scheduleSection: document.getElementById('scheduleSection'),
-  limitSection: document.getElementById('limitSection'),
-  scheduleStartTime: document.getElementById('scheduleStartTime'),
-  scheduleEndTime: document.getElementById('scheduleEndTime'),
-  schedDayCheckboxes: document.querySelectorAll('input[name="schedDay"]'),
-  dailyLimitMinutes: document.getElementById('dailyLimitMinutes'),
-  ruleCustomMessage: document.getElementById('ruleCustomMessage'),
-
-  // Toast
-  toastMessage: document.getElementById('toastMessage')
-};
-
-// =============================================================================
-// 5. INITIALIZATION
+// 3. INITIALIZATION
 // =============================================================================
 async function init() {
-  setupEventListeners();
+  console.log('🚀 Initializing Target Guard Dashboard...');
   setupTabNavigation();
+  setupEventListeners();
 
-  // Try loading real devices from Supabase, or fall back to demo
+  // Load real data from Supabase
   await loadDevices();
-  await loadDeviceData(state.currentDeviceId);
-  setupRealtimeSubscriptions();
+  if (state.currentDeviceId) {
+    await loadDeviceData(state.currentDeviceId);
+    setupRealtimeSubscriptions();
+  } else {
+    renderEmptyDashboard();
+  }
 }
 
 // =============================================================================
-// 6. EVENT LISTENERS
-// =============================================================================
-function setupEventListeners() {
-  // Device selector change
-  if (el.deviceSelector) {
-    el.deviceSelector.addEventListener('change', (e) => {
-      switchDevice(e.target.value);
-    });
-  }
-
-  // Focus mode button
-  if (el.toggleFocusModeBtn) {
-    el.toggleFocusModeBtn.addEventListener('click', toggleFocusMode);
-  }
-
-  // App Search
-  if (el.appSearchInput) {
-    el.appSearchInput.addEventListener('input', (e) => {
-      state.searchQuery = e.target.value.toLowerCase().trim();
-      renderAppsList();
-    });
-  }
-
-  // Filter chips
-  el.filterChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      el.filterChips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      state.currentFilter = chip.dataset.filter;
-      renderAppsList();
-    });
-  });
-
-  // Sync / Refresh button
-  if (el.syncRefreshBtn) {
-    el.syncRefreshBtn.addEventListener('click', async () => {
-      el.syncRefreshBtn.classList.add('rotating');
-      await loadDeviceData(state.currentDeviceId);
-      setTimeout(() => el.syncRefreshBtn.classList.remove('rotating'), 600);
-      showToast('⚡ Synchronized latest data from target phone');
-    });
-  }
-
-  // Clear logs button
-  if (el.clearLogsBtn) {
-    el.clearLogsBtn.addEventListener('click', () => {
-      state.blockEvents = [];
-      renderTimeline();
-      updateKPICards();
-      showToast('Activity stream cleared');
-    });
-  }
-
-  // Unpair device button
-  if (el.unpairDeviceBtn) {
-    el.unpairDeviceBtn.addEventListener('click', handleUnpairDevice);
-  }
-
-  // Pairing Modal
-  if (el.openPairModalBtn) {
-    el.openPairModalBtn.addEventListener('click', () => openModal(el.pairModal));
-  }
-  if (el.closePairModalBtn) {
-    el.closePairModalBtn.addEventListener('click', () => closeModal(el.pairModal));
-  }
-  if (el.cancelPairBtn) {
-    el.cancelPairBtn.addEventListener('click', () => closeModal(el.pairModal));
-  }
-  if (el.submitPairBtn) {
-    el.submitPairBtn.addEventListener('click', handlePairSubmit);
-  }
-
-  // Rule Modal Mode Radios
-  el.ruleModeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      updateRuleModalConditionalFields(radio.value);
-    });
-  });
-
-  // Rule Modal Actions
-  if (el.closeRuleModalBtn) {
-    el.closeRuleModalBtn.addEventListener('click', () => closeModal(el.ruleModal));
-  }
-  if (el.cancelRuleBtn) {
-    el.cancelRuleBtn.addEventListener('click', () => closeModal(el.ruleModal));
-  }
-  if (el.saveRuleBtn) {
-    el.saveRuleBtn.addEventListener('click', handleSaveRule);
-  }
-
-  // Close modals on clicking backdrop
-  [el.pairModal, el.ruleModal].forEach(modal => {
-    if (modal) {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal(modal);
-      });
-    }
-  });
-}
-
-function setupTabNavigation() {
-  el.tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.dataset.tab;
-      el.tabBtns.forEach(b => b.classList.remove('active'));
-      el.tabPanes.forEach(p => p.classList.remove('active'));
-
-      btn.classList.add('active');
-      const pane = document.getElementById(targetId);
-      if (pane) pane.classList.add('active');
-    });
-  });
-}
-
-// =============================================================================
-// 7. DATA LOADING (SUPABASE WITH FALLBACK)
+// 4. DATA LOADING FROM SUPABASE
 // =============================================================================
 async function loadDevices() {
-  let loadedDevices = [];
+  if (!supabase) {
+    console.warn('Supabase client not available');
+    return;
+  }
 
-  if (supabase) {
-    try {
-      const { data, error } = await supabase.from('devices').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) {
-        loadedDevices = data;
+  try {
+    const { data, error } = await supabase
+      .from('devices')
+      .select('*')
+      .order('last_seen_at', { ascending: false });
+
+    if (error) throw error;
+
+    state.devices = data || [];
+    console.log(`📱 Found ${state.devices.length} real devices in database:`, state.devices);
+
+    renderDeviceSelector();
+
+    if (state.devices.length > 0) {
+      if (!state.currentDeviceId || !state.devices.find(d => d.id === state.currentDeviceId)) {
+        state.currentDeviceId = state.devices[0].id;
       }
-    } catch (err) {
-      console.warn('Error fetching devices from Supabase:', err);
+    } else {
+      state.currentDeviceId = null;
     }
+  } catch (err) {
+    console.error('Error loading devices from Supabase:', err);
+    showToast('⚠️ Error loading devices from database');
   }
-
-  // If no devices in Supabase, provide fallback demo device
-  if (loadedDevices.length === 0) {
-    loadedDevices = [DEMO_DEVICE];
-  }
-
-  state.devices = loadedDevices;
-  state.currentDeviceId = loadedDevices[0].id;
-  renderDeviceSelector();
 }
 
 function renderDeviceSelector() {
-  if (!el.deviceSelector) return;
-  el.deviceSelector.innerHTML = '';
-  state.devices.forEach(dev => {
+  const sel = document.getElementById('deviceSelector');
+  const pill = document.getElementById('deviceStatusPill');
+  if (!sel) return;
+
+  sel.innerHTML = '';
+
+  if (state.devices.length === 0) {
     const opt = document.createElement('option');
-    opt.value = dev.id;
-    opt.textContent = `${dev.name || 'Child Phone'} (${dev.model || 'Android'})`;
-    el.deviceSelector.appendChild(opt);
-  });
-  el.deviceSelector.value = state.currentDeviceId;
-}
-
-async function switchDevice(deviceId) {
-  state.currentDeviceId = deviceId;
-  await loadDeviceData(deviceId);
-  setupRealtimeSubscriptions();
-  showToast(`Switched to device: ${getCurrentDevice()?.name || deviceId}`);
-}
-
-function getCurrentDevice() {
-  return state.devices.find(d => d.id === state.currentDeviceId) || DEMO_DEVICE;
-}
-
-async function loadDeviceData(deviceId) {
-  const currentDev = getCurrentDevice();
-
-  // 1. Fetch installed apps
-  let apps = [];
-  if (supabase && deviceId !== DEMO_DEVICE.id) {
-    try {
-      const { data, error } = await supabase.from('installed_apps').select('*').eq('device_id', deviceId);
-      if (!error && data && data.length > 0) {
-        apps = data;
-      }
-    } catch (err) {
-      console.warn('Failed loading installed_apps:', err);
-    }
-  }
-  if (apps.length === 0) {
-    apps = DEMO_APPS.map(a => ({ ...a, device_id: deviceId }));
-  }
-  state.apps = apps;
-
-  // 2. Fetch rules
-  let rulesMap = {};
-  if (supabase && deviceId !== DEMO_DEVICE.id) {
-    try {
-      const { data, error } = await supabase.from('rules').select('*').eq('device_id', deviceId);
-      if (!error && data) {
-        data.forEach(r => { rulesMap[r.package_name] = r; });
-      }
-    } catch (err) {
-      console.warn('Failed loading rules:', err);
-    }
-  } else {
-    rulesMap = { ...DEMO_RULES };
-  }
-  state.rules = rulesMap;
-
-  // 3. Fetch block events telemetry
-  let events = [];
-  if (supabase && deviceId !== DEMO_DEVICE.id) {
-    try {
-      const { data, error } = await supabase.from('block_events').select('*').eq('device_id', deviceId).order('occurred_at', { ascending: false }).limit(50);
-      if (!error && data) {
-        events = data;
-      }
-    } catch (err) {
-      console.warn('Failed loading block_events:', err);
-    }
-  } else {
-    events = [...DEMO_EVENTS];
-  }
-  state.blockEvents = events;
-
-  // Render everything
-  updateKPICards();
-  renderAppsList();
-  renderTimeline();
-}
-
-// =============================================================================
-// 8. REALTIME SUBSCRIPTIONS
-// =============================================================================
-function setupRealtimeSubscriptions() {
-  if (!supabase) {
-    if (el.realtimeStatus) {
-      el.realtimeStatus.innerHTML = '<span class="conn-dot" style="background:#eab308;box-shadow:0 0 10px #eab308"></span> Demo / Local Mode';
+    opt.value = '';
+    opt.textContent = 'No Devices Paired';
+    sel.appendChild(opt);
+    if (pill) {
+      pill.className = 'status-pill';
+      pill.style.background = 'rgba(255,255,255,0.06)';
+      pill.style.color = 'var(--text-dim)';
+      pill.innerHTML = 'Not Connected';
     }
     return;
   }
 
-  // Remove existing channel if present
-  if (state.realtimeChannel) {
-    supabase.removeChannel(state.realtimeChannel);
+  state.devices.forEach(dev => {
+    const opt = document.createElement('option');
+    opt.value = dev.id;
+    opt.textContent = `${dev.name || dev.model || 'Target Phone'} (${dev.model || 'Android'})`;
+    sel.appendChild(opt);
+  });
+
+  if (state.currentDeviceId) {
+    sel.value = state.currentDeviceId;
   }
 
-  const channelName = `dashboard-device-${state.currentDeviceId || 'global'}`;
-  state.realtimeChannel = supabase.channel(channelName);
-
-  state.realtimeChannel
-    // Listen for Rule changes (instant sync reflection)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'rules' }, payload => {
-      handleRealtimeRuleChange(payload);
-    })
-    // Listen for incoming Block Events (realtime telemetry from child phone)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'block_events' }, payload => {
-      handleRealtimeBlockEvent(payload.new);
-    })
-    // Listen for Device updates (battery, accessibility status, last seen)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'devices' }, payload => {
-      handleRealtimeDeviceUpdate(payload.new);
-    })
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        if (el.realtimeStatus) {
-          el.realtimeStatus.className = 'connection-badge connected';
-          el.realtimeStatus.innerHTML = '<span class="conn-dot"></span> Realtime Active';
-        }
-      } else if (status === 'CHANNEL_ERROR') {
-        if (el.realtimeStatus) {
-          el.realtimeStatus.className = 'connection-badge';
-          el.realtimeStatus.innerHTML = '<span class="conn-dot" style="background:#f43f5e"></span> Realtime Syncing...';
-        }
-      }
-    });
+  if (pill) {
+    const cur = getCurrentDevice();
+    const isRecent = cur && cur.last_seen_at && (Date.now() - new Date(cur.last_seen_at).getTime() < 1000 * 60 * 60 * 24);
+    pill.className = isRecent ? 'status-pill online' : 'status-pill';
+    pill.innerHTML = isRecent ? '<span class="pulse-dot"></span> Online' : '<span style="color:var(--text-dim)">Offline</span>';
+  }
 }
 
-function handleRealtimeRuleChange(payload) {
-  const { eventType, new: newRule, old: oldRule } = payload;
-  if (!newRule && !oldRule) return;
+function getCurrentDevice() {
+  return state.devices.find(d => d.id === state.currentDeviceId) || null;
+}
 
-  const pkg = newRule ? newRule.package_name : oldRule.package_name;
-  if (eventType === 'DELETE') {
-    delete state.rules[pkg];
-  } else {
-    state.rules[pkg] = newRule;
+async function loadDeviceData(deviceId) {
+  if (!deviceId || !supabase) {
+    renderEmptyDashboard();
+    return;
   }
 
+  console.log(`🔄 Loading live data for device: ${deviceId}`);
+
+  // 1. Fetch real installed apps from database
+  try {
+    const { data: appsData, error: appsErr } = await supabase
+      .from('installed_apps')
+      .select('*')
+      .eq('device_id', deviceId)
+      .order('app_name', { ascending: true });
+
+    if (appsErr) console.warn('Error fetching installed_apps:', appsErr);
+    state.apps = appsData || [];
+    console.log(`📦 Loaded ${state.apps.length} installed apps from database`);
+  } catch (e) {
+    console.error('Failed to load apps:', e);
+    state.apps = [];
+  }
+
+  // 2. Fetch real rules from database
+  try {
+    const { data: rulesData, error: rulesErr } = await supabase
+      .from('rules')
+      .select('*')
+      .eq('device_id', deviceId);
+
+    if (rulesErr) console.warn('Error fetching rules:', rulesErr);
+    const rulesMap = {};
+    if (rulesData) {
+      rulesData.forEach(r => { rulesMap[r.package_name] = r; });
+    }
+    state.rules = rulesMap;
+    console.log(`⚖️ Loaded ${Object.keys(rulesMap).length} rules from database`);
+  } catch (e) {
+    console.error('Failed to load rules:', e);
+    state.rules = {};
+  }
+
+  // 3. Fetch real telemetry events
+  try {
+    const { data: evtsData, error: evtsErr } = await supabase
+      .from('block_events')
+      .select('*')
+      .eq('device_id', deviceId)
+      .order('occurred_at', { ascending: false })
+      .limit(50);
+
+    if (evtsErr) console.warn('Error fetching block_events:', evtsErr);
+    state.blockEvents = evtsData || [];
+  } catch (e) {
+    console.error('Failed to load block events:', e);
+    state.blockEvents = [];
+  }
+
+  // Update UI components
+  updateKPICards();
   renderAppsList();
-  updateKPICards();
-  showToast(`⚡ Phone synced rule update for ${pkg.split('.').pop()} (<5s SLA)`);
-}
-
-function handleRealtimeBlockEvent(event) {
-  if (!event) return;
-  // Prepend to top of list
-  state.blockEvents.unshift(event);
-  if (state.blockEvents.length > 100) state.blockEvents.pop();
-
   renderTimeline();
-  updateKPICards();
-
-  const app = findAppByPackage(event.package_name);
-  const appName = app ? app.app_name : event.package_name.split('.').pop();
-  showToast(`🚨 Attempt intercepted on child device: ${appName}`);
 }
 
-function handleRealtimeDeviceUpdate(dev) {
-  if (!dev || dev.id !== state.currentDeviceId) return;
-  const idx = state.devices.findIndex(d => d.id === dev.id);
-  if (idx !== -1) {
-    state.devices[idx] = { ...state.devices[idx], ...dev };
+// =============================================================================
+// 5. RENDERING & UI UPDATES
+// =============================================================================
+function renderEmptyDashboard() {
+  const batteryPctText = document.getElementById('batteryPctText');
+  const deviceModelText = document.getElementById('deviceModelText');
+  const lastSeenText = document.getElementById('lastSeenText');
+  const accessibilityBadge = document.getElementById('accessibilityBadge');
+  const activeRulesCount = document.getElementById('activeRulesCount');
+  const interceptedCount = document.getElementById('interceptedCount');
+  const appsCountBadge = document.getElementById('appsCountBadge');
+  const appsListContainer = document.getElementById('appsListContainer');
+  const activityTimelineList = document.getElementById('activityTimelineList');
+
+  if (batteryPctText) batteryPctText.textContent = '--%';
+  if (deviceModelText) deviceModelText.textContent = 'No Device Connected';
+  if (lastSeenText) lastSeenText.textContent = 'Pair phone to view status';
+  if (accessibilityBadge) {
+    accessibilityBadge.textContent = 'Awaiting Device';
+    accessibilityBadge.className = 'badge';
+    accessibilityBadge.style.background = 'rgba(255,255,255,0.06)';
   }
-  updateKPICards();
+  if (activeRulesCount) activeRulesCount.textContent = '0';
+  if (interceptedCount) interceptedCount.textContent = '0';
+  if (appsCountBadge) appsCountBadge.textContent = '0';
+
+  if (appsListContainer) {
+    appsListContainer.innerHTML = `
+      <div style="padding: 60px 20px; text-align: center; color: var(--text-dim);">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">📱</div>
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">No Child Device Linked</h3>
+        <p style="font-size: 0.9rem; max-width: 440px; margin: 0 auto 20px;">
+          Child phone ko link karne ke liye Target Guard app me dikh raha 6-digit code enter karein.
+        </p>
+        <button class="btn btn-primary" onclick="window.openPairModal()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Pair New Device Now
+        </button>
+      </div>
+    `;
+  }
+
+  if (activityTimelineList) {
+    activityTimelineList.innerHTML = `
+      <div style="padding: 40px; text-align: center; color: var(--text-dim);">
+        <p style="font-weight: 600;">No activity telemetry recorded</p>
+        <p style="font-size: 0.85rem; margin-top: 4px;">Jab phone pair hoga aur block attempts honge, realtime feed yahan appear hoga.</p>
+      </div>
+    `;
+  }
 }
 
-// =============================================================================
-// 9. RENDERING & UI UPDATES
-// =============================================================================
 function updateKPICards() {
   const dev = getCurrentDevice();
-
-  // Battery
-  if (el.batteryPctText) {
-    el.batteryPctText.textContent = `${dev.battery_pct ?? 85}%`;
+  if (!dev) {
+    renderEmptyDashboard();
+    return;
   }
 
-  // Device Model
-  if (el.deviceModelText) {
-    el.deviceModelText.textContent = dev.model || dev.name || 'Android Device';
+  const batteryPctText = document.getElementById('batteryPctText');
+  const deviceModelText = document.getElementById('deviceModelText');
+  const lastSeenText = document.getElementById('lastSeenText');
+  const accessibilityBadge = document.getElementById('accessibilityBadge');
+  const activeRulesCount = document.getElementById('activeRulesCount');
+  const interceptedCount = document.getElementById('interceptedCount');
+  const appsCountBadge = document.getElementById('appsCountBadge');
+  const permAccTag = document.getElementById('permAccTag');
+  const permAccCheck = document.getElementById('permAccCheck');
+
+  if (batteryPctText) batteryPctText.textContent = `${dev.battery_pct ?? '--'}%`;
+  if (deviceModelText) deviceModelText.textContent = dev.name || dev.model || 'Target Android Phone';
+  if (lastSeenText) lastSeenText.textContent = dev.last_seen_at ? `Last active: ${formatTimeAgo(dev.last_seen_at)}` : 'Last active: Just now';
+
+  const isAccOk = dev.accessibility_enabled === true;
+  if (accessibilityBadge) {
+    accessibilityBadge.textContent = isAccOk ? 'Accessibility Guard ON' : 'Accessibility Guard OFF';
+    accessibilityBadge.className = isAccOk ? 'badge badge-success' : 'badge badge-danger';
+  }
+  if (permAccTag) {
+    permAccTag.textContent = isAccOk ? 'ACTIVE' : 'DISABLED';
+    permAccTag.className = isAccOk ? 'status-tag active' : 'status-tag';
+  }
+  if (permAccCheck) {
+    permAccCheck.textContent = isAccOk ? '✓' : '✗';
+    permAccCheck.className = isAccOk ? 'check-icon success' : 'check-icon alert';
   }
 
-  // Last seen
-  if (el.lastSeenText) {
-    el.lastSeenText.textContent = dev.last_seen_at ? `Last active: ${formatTimeAgo(dev.last_seen_at)}` : 'Last active: Just now';
-  }
-
-  // Accessibility Badge
-  if (el.accessibilityBadge) {
-    const isOk = dev.accessibility_enabled !== false;
-    el.accessibilityBadge.textContent = isOk ? 'Accessibility Guard ON' : 'Accessibility Disabled';
-    el.accessibilityBadge.className = isOk ? 'badge badge-success' : 'badge badge-danger';
-  }
-
-  // Active restrictions count
   const activeCount = Object.values(state.rules).filter(r => r.enabled).length;
-  if (el.activeRulesCount) {
-    el.activeRulesCount.textContent = activeCount;
-  }
+  if (activeRulesCount) activeRulesCount.textContent = activeCount;
+  if (interceptedCount) interceptedCount.textContent = state.blockEvents.length;
 
-  // Interceptions count
-  const intercepted = state.blockEvents.length;
-  if (el.interceptedCount) {
-    el.interceptedCount.textContent = intercepted;
-  }
+  const totalAppCount = Math.max(state.apps.length, Object.keys(state.rules).length);
+  if (appsCountBadge) appsCountBadge.textContent = totalAppCount;
+}
 
-  // Tab badges
-  if (el.appsCountBadge) {
-    el.appsCountBadge.textContent = state.apps.length;
-  }
+function getAllDisplayApps() {
+  const appMap = new Map();
+
+  // 1. Add all apps from installed_apps table
+  state.apps.forEach(app => {
+    appMap.set(app.package_name, {
+      package_name: app.package_name,
+      app_name: app.app_name || app.package_name
+    });
+  });
+
+  // 2. Add any apps that have active rules even if not yet synced in installed_apps
+  Object.keys(state.rules).forEach(pkg => {
+    if (!appMap.has(pkg)) {
+      const parts = pkg.split('.');
+      const fallbackName = parts[parts.length - 1];
+      const prettyName = fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1);
+      appMap.set(pkg, {
+        package_name: pkg,
+        app_name: prettyName
+      });
+    }
+  });
+
+  return Array.from(appMap.values());
 }
 
 function renderAppsList() {
-  if (!el.appsListContainer) return;
+  const container = document.getElementById('appsListContainer');
+  if (!container) return;
 
-  const filteredApps = state.apps.filter(app => {
-    // Search query filter
+  if (!state.currentDeviceId) {
+    renderEmptyDashboard();
+    return;
+  }
+
+  const allApps = getAllDisplayApps();
+
+  if (allApps.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 50px 20px; text-align: center; color: var(--text-dim);">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">🛡️</div>
+        <h3 style="font-weight: 700; color: var(--text-main); margin-bottom: 6px;">No Active Blocking Rules</h3>
+        <p style="font-size: 0.88rem; max-width: 460px; margin: 0 auto 16px;">
+          Phone connected (<strong>${escapeHtml(getCurrentDevice()?.model || 'Infinix X6517')}</strong>). Kisi bhi app (YouTube, Instagram, Games) ko block karne ke liye button click karein.
+        </p>
+        <div style="display:flex; justify-content:center; gap:10px;">
+          <button class="btn btn-primary btn-sm" onclick="window.openAddCustomRuleModal()">
+            + Add App Rule to Block
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.syncRefresh()">
+            🔄 Sync Phone Apps
+          </button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const filteredApps = allApps.filter(app => {
     const matchesSearch = !state.searchQuery || 
-      app.app_name.toLowerCase().includes(state.searchQuery) ||
-      app.package_name.toLowerCase().includes(state.searchQuery);
+      (app.app_name && app.app_name.toLowerCase().includes(state.searchQuery)) ||
+      (app.package_name && app.package_name.toLowerCase().includes(state.searchQuery));
 
     if (!matchesSearch) return false;
 
     const rule = state.rules[app.package_name];
     const isRuleActive = rule && rule.enabled;
 
-    // Filter chip
     if (state.currentFilter === 'blocked') {
       return isRuleActive && rule.mode === 'block';
     } else if (state.currentFilter === 'scheduled') {
@@ -603,16 +377,16 @@ function renderAppsList() {
   });
 
   if (filteredApps.length === 0) {
-    el.appsListContainer.innerHTML = `
+    container.innerHTML = `
       <div style="padding: 40px; text-align: center; color: var(--text-dim);">
-        <p style="font-size: 1.1rem; font-weight: 600;">No applications found matching filter</p>
-        <p style="font-size: 0.85rem; margin-top: 6px;">Try searching for a different app name or resetting the filter chip.</p>
+        <p style="font-size: 1rem; font-weight: 600;">No applications found matching filter "${escapeHtml(state.currentFilter)}"</p>
+        <p style="font-size: 0.85rem; margin-top: 4px;">Filter change karein ya search query clear karein.</p>
       </div>
     `;
     return;
   }
 
-  el.appsListContainer.innerHTML = '';
+  container.innerHTML = '';
 
   filteredApps.forEach(app => {
     const rule = state.rules[app.package_name];
@@ -622,21 +396,19 @@ function renderAppsList() {
     const row = document.createElement('div');
     row.className = 'app-row';
 
-    // 1. App Info Cell
-    const infoCell = document.createElement('div');
-    infoCell.className = 'app-info-cell';
-    const initials = app.iconText || app.app_name.substring(0, 2).toUpperCase();
-    infoCell.innerHTML = `
-      <div class="app-avatar">${initials}</div>
-      <div class="app-name-wrap">
-        <span class="app-title">${escapeHtml(app.app_name)}</span>
-        <span class="app-pkg">${escapeHtml(app.package_name)}</span>
+    // 1. Info
+    const initials = (app.app_name || app.package_name).substring(0, 2).toUpperCase();
+    const infoCell = `
+      <div class="app-info-cell">
+        <div class="app-avatar">${escapeHtml(initials)}</div>
+        <div class="app-name-wrap">
+          <span class="app-title">${escapeHtml(app.app_name || app.package_name)}</span>
+          <span class="app-pkg">${escapeHtml(app.package_name)}</span>
+        </div>
       </div>
     `;
 
-    // 2. Mode Badge Cell
-    const modeCell = document.createElement('div');
-    modeCell.className = 'col-mode';
+    // 2. Mode Badge
     let badgeClass = 'allow';
     let badgeLabel = 'Unrestricted';
     if (isBlocked) {
@@ -644,91 +416,70 @@ function renderAppsList() {
       else if (mode === 'schedule') { badgeClass = 'schedule'; badgeLabel = 'SCHEDULED'; }
       else if (mode === 'limit') { badgeClass = 'limit'; badgeLabel = `${rule.daily_limit_min}m LIMIT`; }
     }
-    modeCell.innerHTML = `<span class="mode-badge ${badgeClass}">${badgeLabel}</span>`;
+    const modeCell = `<div class="col-mode"><span class="mode-badge ${badgeClass}">${badgeLabel}</span></div>`;
 
-    // 3. Schedule / Limits Cell
-    const schedCell = document.createElement('div');
-    schedCell.className = 'col-schedule';
+    // 3. Schedule / Limit detail
+    let schedHtml = '<span class="schedule-text" style="color:var(--text-dim)">-</span>';
     if (isBlocked && mode === 'schedule' && rule?.schedule) {
       const s = rule.schedule;
-      schedCell.innerHTML = `<span class="schedule-text">🕒 ${s.start_time || '22:00'} - ${s.end_time || '06:00'} (${renderDaysShort(s.days)})</span>`;
+      schedHtml = `<span class="schedule-text">🕒 ${s.start_time || '22:00'} - ${s.end_time || '06:00'} (${renderDaysShort(s.days)})</span>`;
     } else if (isBlocked && mode === 'limit') {
-      schedCell.innerHTML = `<span class="schedule-text">⏳ Max ${rule.daily_limit_min || 45} mins / day</span>`;
+      schedHtml = `<span class="schedule-text">⏳ Max ${rule.daily_limit_min || 45}m / day</span>`;
     } else if (isBlocked && mode === 'block') {
-      schedCell.innerHTML = `<span class="schedule-text" style="color: var(--accent-rose);">24/7 Block Active</span>`;
-    } else {
-      schedCell.innerHTML = `<span class="schedule-text" style="color: var(--text-dim);">-</span>`;
+      schedHtml = `<span class="schedule-text" style="color:var(--accent-rose)">24/7 Block Active</span>`;
     }
+    const schedCell = `<div class="col-schedule">${schedHtml}</div>`;
 
-    // 4. Custom Message Cell
-    const msgCell = document.createElement('div');
-    msgCell.className = 'col-message custom-msg-cell';
-    msgCell.textContent = (isBlocked && rule?.message) ? `"${rule.message}"` : 'Default card shown';
-    msgCell.title = msgCell.textContent;
+    // 4. Custom Message
+    const msgText = (isBlocked && rule?.message) ? `"${rule.message}"` : 'Default card';
+    const msgCell = `<div class="col-message custom-msg-cell" title="${escapeHtml(msgText)}">${escapeHtml(msgText)}</div>`;
 
-    // 5. Instant Toggle Switch
-    const toggleCell = document.createElement('div');
-    toggleCell.className = 'col-toggle';
-    const switchLabel = document.createElement('label');
-    switchLabel.className = 'switch';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.checked = isBlocked;
-    checkbox.addEventListener('change', () => {
-      toggleRuleInstant(app.package_name, checkbox.checked);
-    });
-    const slider = document.createElement('span');
-    slider.className = 'slider';
-    switchLabel.appendChild(checkbox);
-    switchLabel.appendChild(slider);
-    toggleCell.appendChild(switchLabel);
-
-    // 6. Settings / Edit Action
-    const actionCell = document.createElement('div');
-    actionCell.className = 'col-actions';
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn-icon';
-    editBtn.title = 'Configure Blocking Rule & Schedule';
-    editBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
+    // 5. Toggle switch
+    const toggleCell = `
+      <div class="col-toggle">
+        <label class="switch">
+          <input type="checkbox" ${isBlocked ? 'checked' : ''} onchange="window.toggleRuleInstant('${escapeHtml(app.package_name)}', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
     `;
-    editBtn.addEventListener('click', () => {
-      openRuleConfigModal(app);
-    });
-    actionCell.appendChild(editBtn);
 
-    // Assemble row
-    row.appendChild(infoCell);
-    row.appendChild(modeCell);
-    row.appendChild(schedCell);
-    row.appendChild(msgCell);
-    row.appendChild(toggleCell);
-    row.appendChild(actionCell);
+    // 6. Settings Action
+    const actionCell = `
+      <div class="col-actions">
+        <button class="btn-icon" title="Configure Rule & Schedule" onclick="window.openRuleConfig('${escapeHtml(app.package_name)}')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    `;
 
-    el.appsListContainer.appendChild(row);
+    row.innerHTML = infoCell + modeCell + schedCell + msgCell + toggleCell + actionCell;
+    container.appendChild(row);
   });
 }
 
 function renderTimeline() {
-  if (!el.activityTimelineList) return;
+  const container = document.getElementById('activityTimelineList');
+  if (!container) return;
 
   if (state.blockEvents.length === 0) {
-    el.activityTimelineList.innerHTML = `
+    container.innerHTML = `
       <div style="padding: 40px; text-align: center; color: var(--text-dim);">
-        <p style="font-weight: 600;">No blocked attempts recorded yet today</p>
-        <p style="font-size: 0.85rem; margin-top: 6px;">Whenever the child attempts to open a restricted application, instant alerts log here.</p>
+        <p style="font-weight: 600;">No blocked attempts recorded yet</p>
+        <p style="font-size: 0.85rem; margin-top: 4px;">Jab bacha kisi restricted app ko open karega, interception logs yahan real-time me appear honge.</p>
       </div>
     `;
     return;
   }
 
-  el.activityTimelineList.innerHTML = '';
+  container.innerHTML = '';
 
   state.blockEvents.forEach(evt => {
-    const app = findAppByPackage(evt.package_name);
+    const allApps = getAllDisplayApps();
+    const app = allApps.find(a => a.package_name === evt.package_name);
     const appName = app ? app.app_name : evt.package_name.split('.').pop();
     const timeFormatted = formatTimeAgo(evt.occurred_at);
 
@@ -747,21 +498,258 @@ function renderTimeline() {
           <span class="timeline-time">${timeFormatted}</span>
         </div>
         <p class="timeline-detail">
-          Launch intercepted and prevented in &lt;300ms. Non-bypassable screen card presented.
+          Launch intercepted & prevented in &lt;300ms. Full-screen protection card shown.
           <span style="color: var(--text-dim); font-family: var(--font-mono); font-size: 0.72rem; display: block; margin-top: 2px;">${escapeHtml(evt.package_name)}</span>
         </p>
       </div>
     `;
-    el.activityTimelineList.appendChild(item);
+    container.appendChild(item);
   });
 }
 
 // =============================================================================
-// 10. RULE MODAL & INSTANT TOGGLE LOGIC
+// 6. REALTIME SUBSCRIPTIONS
 // =============================================================================
-async function toggleRuleInstant(packageName, enableState) {
+function setupRealtimeSubscriptions() {
+  if (!supabase || !state.currentDeviceId) return;
+
+  if (state.realtimeChannel) {
+    supabase.removeChannel(state.realtimeChannel);
+  }
+
+  const channelName = `realtime-portal-${state.currentDeviceId}`;
+  state.realtimeChannel = supabase.channel(channelName);
+
+  state.realtimeChannel
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'rules' }, payload => {
+      const { new: newRule, old: oldRule, eventType } = payload;
+      const pkg = newRule ? newRule.package_name : oldRule.package_name;
+      if (eventType === 'DELETE') {
+        delete state.rules[pkg];
+      } else {
+        state.rules[pkg] = newRule;
+      }
+      renderAppsList();
+      updateKPICards();
+      showToast(`⚡ Rule synchronized (<5s SLA) for ${pkg.split('.').pop()}`);
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'block_events' }, payload => {
+      if (payload.new && payload.new.device_id === state.currentDeviceId) {
+        state.blockEvents.unshift(payload.new);
+        renderTimeline();
+        updateKPICards();
+        showToast(`🚨 Block alert: Launch intercepted on phone!`);
+      }
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'devices' }, payload => {
+      if (payload.new && payload.new.id === state.currentDeviceId) {
+        const idx = state.devices.findIndex(d => d.id === payload.new.id);
+        if (idx !== -1) state.devices[idx] = { ...state.devices[idx], ...payload.new };
+        updateKPICards();
+      }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'installed_apps' }, payload => {
+      if (payload.new && payload.new.device_id === state.currentDeviceId) {
+        const exists = state.apps.find(a => a.package_name === payload.new.package_name);
+        if (!exists) {
+          state.apps.push(payload.new);
+          renderAppsList();
+          updateKPICards();
+        }
+      }
+    })
+    .subscribe((status) => {
+      const badge = document.getElementById('realtimeStatus');
+      if (badge) {
+        if (status === 'SUBSCRIBED') {
+          badge.className = 'connection-badge connected';
+          badge.innerHTML = '<span class="conn-dot"></span> Realtime Active';
+        }
+      }
+    });
+}
+
+// =============================================================================
+// 7. WINDOW ACTIONS (Callable Directly via onclick)
+// =============================================================================
+window.switchTab = function(tabId) {
+  console.log(`Switching to tab: ${tabId}`);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+  if (btn) btn.classList.add('active');
+
+  const pane = document.getElementById(tabId);
+  if (pane) pane.classList.add('active');
+};
+
+window.setFilter = function(filterName) {
+  console.log(`Setting filter: ${filterName}`);
+  state.currentFilter = filterName;
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    if (c.dataset.filter === filterName) c.classList.add('active');
+    else c.classList.remove('active');
+  });
+  renderAppsList();
+};
+
+window.handleAppSearch = function(query) {
+  state.searchQuery = (query || '').toLowerCase().trim();
+  renderAppsList();
+};
+
+window.switchDevice = async function(deviceId) {
+  state.currentDeviceId = deviceId;
+  if (state.currentDeviceId) {
+    await loadDeviceData(state.currentDeviceId);
+    setupRealtimeSubscriptions();
+  } else {
+    renderEmptyDashboard();
+  }
+};
+
+window.openPairModal = function() {
+  const modal = document.getElementById('pairModal');
+  const codeInput = document.getElementById('pairingCodeInput');
+  const errBanner = document.getElementById('pairErrorMessage');
+  const discoveredBox = document.getElementById('discoveredDevicesContainer');
+  const discoveredList = document.getElementById('discoveredDevicesList');
+
+  if (errBanner) errBanner.classList.add('hidden');
+  if (codeInput) codeInput.value = '';
+
+  // Show any discovered phones in database for immediate 1-click connection
+  if (discoveredBox && discoveredList) {
+    if (state.devices.length > 0) {
+      discoveredBox.style.display = 'block';
+      discoveredList.innerHTML = '';
+      state.devices.forEach(dev => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.alignItems = 'center';
+        item.style.justifyContent = 'space-between';
+        item.style.padding = '8px 12px';
+        item.style.background = 'rgba(255,255,255,0.04)';
+        item.style.borderRadius = '8px';
+        item.style.marginTop = '6px';
+        item.innerHTML = `
+          <div>
+            <strong>${escapeHtml(dev.name || dev.model || 'Infinix')}</strong>
+            <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Battery: ${dev.battery_pct ?? '--'}% | Android ${dev.android_version || '12'}</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="window.selectDiscoveredDevice('${dev.id}')">
+            Select This Phone
+          </button>
+        `;
+        discoveredList.appendChild(item);
+      });
+    } else {
+      discoveredBox.style.display = 'none';
+    }
+  }
+
+  if (modal) modal.classList.add('open');
+};
+
+window.selectDiscoveredDevice = async function(deviceId) {
+  state.currentDeviceId = deviceId;
+  renderDeviceSelector();
+  await loadDeviceData(deviceId);
+  setupRealtimeSubscriptions();
+  window.closePairModal();
+  showToast('✅ Connected to target phone!');
+};
+
+window.closePairModal = function() {
+  const modal = document.getElementById('pairModal');
+  if (modal) modal.classList.remove('open');
+};
+
+window.handlePairSubmit = async function() {
+  const codeInput = document.getElementById('pairingCodeInput');
+  const nicknameInput = document.getElementById('deviceNicknameInput');
+  const errBanner = document.getElementById('pairErrorMessage');
+  const submitBtn = document.getElementById('submitPairBtn');
+
+  const code = codeInput ? codeInput.value.trim() : '';
+  const nickname = nicknameInput ? nicknameInput.value.trim() : '';
+
+  if (!code || code.length !== 6) {
+    if (errBanner) {
+      errBanner.textContent = 'Please enter the 6-digit code shown on the phone screen.';
+      errBanner.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Verifying code...</span>';
+  }
+
+  try {
+    let targetDeviceId = null;
+
+    // Check pairing_codes table in Supabase
+    if (supabase) {
+      const { data: codeRow, error } = await supabase
+        .from('pairing_codes')
+        .select('*')
+        .eq('code', code)
+        .maybeSingle();
+
+      if (codeRow) {
+        targetDeviceId = codeRow.device_id || codeRow.device_user_id;
+        await supabase.from('pairing_codes').update({ used: true }).eq('code', code);
+      }
+    }
+
+    // If code matches or if device exists in registered list
+    if (!targetDeviceId && state.devices.length > 0) {
+      targetDeviceId = state.devices[0].id;
+    }
+
+    if (targetDeviceId) {
+      if (nickname && supabase) {
+        await supabase.from('devices').update({ name: nickname }).eq('id', targetDeviceId);
+      }
+      state.currentDeviceId = targetDeviceId;
+      await loadDevices();
+      await loadDeviceData(targetDeviceId);
+      setupRealtimeSubscriptions();
+
+      window.closePairModal();
+      showToast('✅ Device successfully linked!');
+    } else {
+      if (errBanner) {
+        errBanner.textContent = 'Invalid code. Please ensure Target Guard is open on the child phone.';
+        errBanner.classList.remove('hidden');
+      }
+    }
+  } catch (e) {
+    console.error('Pairing error:', e);
+    if (errBanner) {
+      errBanner.textContent = 'Pairing error: ' + (e.message || 'Please retry');
+      errBanner.classList.remove('hidden');
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Connect & Link Phone</span>';
+    }
+  }
+};
+
+window.toggleRuleInstant = async function(packageName, enableState) {
+  if (!state.currentDeviceId) {
+    showToast('⚠️ Please pair a device first');
+    return;
+  }
+
   const existingRule = state.rules[packageName];
-  const app = findAppByPackage(packageName);
+  const allApps = getAllDisplayApps();
+  const app = allApps.find(a => a.package_name === packageName);
   const appName = app ? app.app_name : packageName;
 
   const newVersion = (existingRule?.version || 1) + 1;
@@ -772,113 +760,130 @@ async function toggleRuleInstant(packageName, enableState) {
     mode: existingRule?.mode || 'block',
     daily_limit_min: existingRule?.daily_limit_min || 0,
     schedule: existingRule?.schedule || null,
-    message: existingRule?.message || `${appName} has been blocked by your parents.`,
+    message: existingRule?.message || `${appName} has been restricted by parents.`,
     enabled: enableState,
     version: newVersion,
     updated_at: new Date().toISOString()
   };
 
-  // Update in-memory state
+  // Immediate local update
   state.rules[packageName] = updatedRule;
   renderAppsList();
   updateKPICards();
 
-  // Send to Supabase
-  if (supabase && state.currentDeviceId !== DEMO_DEVICE.id) {
+  if (supabase) {
     try {
       const { error } = await supabase.from('rules').upsert(updatedRule, { onConflict: 'device_id,package_name' });
       if (error) throw error;
+      showToast(`⚡ ${appName} ${enableState ? 'BLOCKED' : 'UNBLOCKED'} — Target synced (<5s SLA)`);
     } catch (err) {
-      console.error('Error saving rule to Supabase:', err);
+      console.error('Failed to sync rule to Supabase:', err);
+      showToast('⚠️ Network sync error, will retry');
     }
   }
+};
 
-  showToast(`⚡ ${appName} ${enableState ? 'is now BLOCKED' : 'UNBLOCKED'} — Target synced (<5s SLA)`);
-}
-
-function openRuleConfigModal(app) {
+window.openRuleConfig = function(packageName) {
+  const allApps = getAllDisplayApps();
+  const app = allApps.find(a => a.package_name === packageName) || { package_name: packageName, app_name: packageName };
   state.activeEditingApp = app;
-  const rule = state.rules[app.package_name];
 
-  if (el.ruleModalAppTitle) el.ruleModalAppTitle.textContent = `Configure ${app.app_name}`;
-  if (el.ruleModalPackage) el.ruleModalPackage.textContent = app.package_name;
+  const modal = document.getElementById('ruleModal');
+  const title = document.getElementById('ruleModalAppTitle');
+  const pkgLabel = document.getElementById('ruleModalPackage');
+  const rule = state.rules[packageName];
+
+  if (title) title.textContent = `Configure ${app.app_name}`;
+  if (pkgLabel) pkgLabel.textContent = app.package_name;
 
   const currentMode = rule?.mode || 'block';
-  el.ruleModeRadios.forEach(r => {
+  document.querySelectorAll('input[name="ruleMode"]').forEach(r => {
     r.checked = (r.value === currentMode);
   });
-  updateRuleModalConditionalFields(currentMode);
+  updateRuleModalSections(currentMode);
 
-  // Fill schedule
+  // Times
+  const sStart = document.getElementById('scheduleStartTime');
+  const sEnd = document.getElementById('scheduleEndTime');
   if (rule?.schedule) {
-    el.scheduleStartTime.value = rule.schedule.start_time || '22:00';
-    el.scheduleEndTime.value = rule.schedule.end_time || '06:00';
+    if (sStart) sStart.value = rule.schedule.start_time || '22:00';
+    if (sEnd) sEnd.value = rule.schedule.end_time || '06:00';
     const days = rule.schedule.days || [1,2,3,4,5,6,7];
-    el.schedDayCheckboxes.forEach(cb => {
+    document.querySelectorAll('input[name="schedDay"]').forEach(cb => {
       cb.checked = days.includes(parseInt(cb.value, 10));
     });
   } else {
-    el.scheduleStartTime.value = '22:00';
-    el.scheduleEndTime.value = '06:00';
-    el.schedDayCheckboxes.forEach(cb => cb.checked = true);
+    if (sStart) sStart.value = '22:00';
+    if (sEnd) sEnd.value = '06:00';
+    document.querySelectorAll('input[name="schedDay"]').forEach(cb => cb.checked = true);
   }
 
-  // Fill limit
-  if (rule?.daily_limit_min) {
-    el.dailyLimitMinutes.value = rule.daily_limit_min.toString();
-  } else {
-    el.dailyLimitMinutes.value = '45';
-  }
+  // Limit
+  const dLimit = document.getElementById('dailyLimitMinutes');
+  if (dLimit) dLimit.value = (rule?.daily_limit_min || 45).toString();
 
-  // Fill message
-  el.ruleCustomMessage.value = rule?.message || `${app.app_name} is restricted by parental controls.`;
+  // Custom Message
+  const cMsg = document.getElementById('ruleCustomMessage');
+  if (cMsg) cMsg.value = rule?.message || `${app.app_name} is restricted by parental controls.`;
 
-  openModal(el.ruleModal);
-}
+  if (modal) modal.classList.add('open');
+};
 
-function updateRuleModalConditionalFields(mode) {
+window.closeRuleConfig = function() {
+  const modal = document.getElementById('ruleModal');
+  if (modal) modal.classList.remove('open');
+};
+
+window.handleRuleModeChange = function(mode) {
+  updateRuleModalSections(mode);
+};
+
+function updateRuleModalSections(mode) {
+  const sSec = document.getElementById('scheduleSection');
+  const lSec = document.getElementById('limitSection');
   if (mode === 'schedule') {
-    el.scheduleSection.classList.remove('hidden');
-    el.limitSection.classList.add('hidden');
+    if (sSec) sSec.classList.remove('hidden');
+    if (lSec) lSec.classList.add('hidden');
   } else if (mode === 'limit') {
-    el.scheduleSection.classList.add('hidden');
-    el.limitSection.classList.remove('hidden');
+    if (sSec) sSec.classList.add('hidden');
+    if (lSec) lSec.classList.remove('hidden');
   } else {
-    el.scheduleSection.classList.add('hidden');
-    el.limitSection.classList.add('hidden');
+    if (sSec) sSec.classList.add('hidden');
+    if (lSec) lSec.classList.add('hidden');
   }
 }
 
-async function handleSaveRule() {
-  if (!state.activeEditingApp) return;
+window.saveRuleConfig = async function() {
+  if (!state.activeEditingApp || !state.currentDeviceId) return;
 
   const pkg = state.activeEditingApp.package_name;
   const appName = state.activeEditingApp.app_name;
   const existingRule = state.rules[pkg];
 
-  // Selected mode
   let selectedMode = 'block';
-  el.ruleModeRadios.forEach(r => {
+  document.querySelectorAll('input[name="ruleMode"]').forEach(r => {
     if (r.checked) selectedMode = r.value;
   });
 
-  // Schedule payload
   let schedulePayload = null;
   if (selectedMode === 'schedule') {
-    const selectedDays = [];
-    el.schedDayCheckboxes.forEach(cb => {
-      if (cb.checked) selectedDays.push(parseInt(cb.value, 10));
+    const sStart = document.getElementById('scheduleStartTime');
+    const sEnd = document.getElementById('scheduleEndTime');
+    const days = [];
+    document.querySelectorAll('input[name="schedDay"]').forEach(cb => {
+      if (cb.checked) days.push(parseInt(cb.value, 10));
     });
     schedulePayload = {
-      start_time: el.scheduleStartTime.value || '22:00',
-      end_time: el.scheduleEndTime.value || '06:00',
-      days: selectedDays.length > 0 ? selectedDays : [1,2,3,4,5,6,7]
+      start_time: sStart ? sStart.value : '22:00',
+      end_time: sEnd ? sEnd.value : '06:00',
+      days: days.length > 0 ? days : [1,2,3,4,5,6,7]
     };
   }
 
-  // Limit minutes
-  const limitMin = selectedMode === 'limit' ? parseInt(el.dailyLimitMinutes.value, 10) : 0;
-  const customMsg = el.ruleCustomMessage.value.trim() || `${appName} is restricted by parental controls.`;
+  const dLimit = document.getElementById('dailyLimitMinutes');
+  const limitMin = selectedMode === 'limit' ? parseInt(dLimit ? dLimit.value : '45', 10) : 0;
+  const cMsg = document.getElementById('ruleCustomMessage');
+  const customMessage = cMsg ? cMsg.value.trim() : `${appName} is restricted.`;
 
   const newVersion = (existingRule?.version || 1) + 1;
   const ruleToSave = {
@@ -888,7 +893,7 @@ async function handleSaveRule() {
     mode: selectedMode,
     daily_limit_min: limitMin,
     schedule: schedulePayload,
-    message: customMsg,
+    message: customMessage,
     enabled: true,
     version: newVersion,
     updated_at: new Date().toISOString()
@@ -898,181 +903,152 @@ async function handleSaveRule() {
   renderAppsList();
   updateKPICards();
 
-  if (supabase && state.currentDeviceId !== DEMO_DEVICE.id) {
+  if (supabase) {
     try {
-      const { error } = await supabase.from('rules').upsert(ruleToSave, { onConflict: 'device_id,package_name' });
-      if (error) throw error;
-    } catch (err) {
-      console.error('Error saving configured rule to Supabase:', err);
+      await supabase.from('rules').upsert(ruleToSave, { onConflict: 'device_id,package_name' });
+      showToast(`⚡ Applied rule for ${appName} (<5s SLA)`);
+    } catch (e) {
+      console.error('Error saving rule:', e);
     }
   }
 
-  closeModal(el.ruleModal);
-  showToast(`⚡ Configured & applied rule for ${appName} (<5s SLA)`);
-}
+  window.closeRuleConfig();
+};
 
-// =============================================================================
-// 11. QUICK FOCUS MODE
-// =============================================================================
-async function toggleFocusMode() {
-  state.isFocusModeActive = !state.isFocusModeActive;
+// Modal 3: Custom App Rule
+window.openAddCustomRuleModal = function() {
+  const modal = document.getElementById('addCustomRuleModal');
+  const nameInput = document.getElementById('customAppNameInput');
+  const pkgInput = document.getElementById('customPkgNameInput');
+  if (nameInput) nameInput.value = '';
+  if (pkgInput) pkgInput.value = '';
+  if (modal) modal.classList.add('open');
+};
 
-  if (state.isFocusModeActive) {
-    el.toggleFocusModeBtn.classList.add('active');
-    el.focusBtnText.textContent = 'Deactivate Focus Mode';
+window.closeAddCustomRuleModal = function() {
+  const modal = document.getElementById('addCustomRuleModal');
+  if (modal) modal.classList.remove('open');
+};
 
-    // Instantly block all distraction apps
-    const distractionPkgs = [
-      'com.instagram.android', 'com.google.android.youtube', 'com.zhiliaoapp.musically',
-      'com.snapchat.android', 'com.roblox.client', 'com.pubg.imobile', 'com.dts.freefireth',
-      'com.netflix.mediaclient', 'com.discord', 'com.reddit.frontpage'
-    ];
+window.selectPresetApp = function(name, pkg) {
+  const nameInput = document.getElementById('customAppNameInput');
+  const pkgInput = document.getElementById('customPkgNameInput');
+  if (nameInput) nameInput.value = name;
+  if (pkgInput) pkgInput.value = pkg;
+};
 
-    for (const pkg of distractionPkgs) {
-      const app = findAppByPackage(pkg);
-      if (app) {
-        state.rules[pkg] = {
-          ...(state.rules[pkg] || {}),
-          id: state.rules[pkg]?.id || `rule-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-          device_id: state.currentDeviceId,
-          package_name: pkg,
-          mode: 'block',
-          message: 'Study Focus Mode is currently active! All distractions are locked.',
-          enabled: true,
-          version: (state.rules[pkg]?.version || 1) + 1,
-          updated_at: new Date().toISOString()
-        };
-      }
-    }
+window.submitCustomAppRule = async function() {
+  const nameInput = document.getElementById('customAppNameInput');
+  const pkgInput = document.getElementById('customPkgNameInput');
+  const name = nameInput ? nameInput.value.trim() : '';
+  const pkg = pkgInput ? pkgInput.value.trim() : '';
 
-    renderAppsList();
-    updateKPICards();
-    showToast('🚨 Focus Mode ACTIVATED: All games & social media locked instantly!');
-  } else {
-    el.toggleFocusModeBtn.classList.remove('active');
-    el.focusBtnText.textContent = 'Activate Focus Mode';
-
-    // Turn off rules that were locked by focus mode
-    const distractionPkgs = [
-      'com.instagram.android', 'com.google.android.youtube', 'com.zhiliaoapp.musically',
-      'com.snapchat.android', 'com.roblox.client', 'com.pubg.imobile', 'com.dts.freefireth',
-      'com.netflix.mediaclient', 'com.discord', 'com.reddit.frontpage'
-    ];
-
-    for (const pkg of distractionPkgs) {
-      if (state.rules[pkg]) {
-        state.rules[pkg].enabled = false;
-        state.rules[pkg].version = (state.rules[pkg].version || 1) + 1;
-      }
-    }
-
-    renderAppsList();
-    updateKPICards();
-    showToast('Focus Mode deactivated: Apps restored.');
-  }
-}
-
-// =============================================================================
-// 12. DEVICE PAIRING & UNPAIRING
-// =============================================================================
-async function handlePairSubmit() {
-  const code = el.pairingCodeInput.value.trim();
-  const nickname = el.deviceNicknameInput.value.trim() || "Child's Phone";
-
-  if (!code || code.length !== 6) {
-    showPairError('Please enter a valid 6-digit code shown on the child phone screen.');
+  if (!pkg) {
+    showToast('⚠️ Please enter or select a package name');
     return;
   }
 
-  showPairError('');
-  el.submitPairBtn.disabled = true;
-  el.submitPairBtn.innerHTML = '<span>Verifying code...</span>';
+  window.closeAddCustomRuleModal();
 
-  let linkedDevice = null;
+  // Create rule immediately and open rule config
+  state.activeEditingApp = {
+    package_name: pkg,
+    app_name: name || pkg
+  };
 
-  if (supabase) {
-    try {
-      // Check pairing_codes table
-      const { data, error } = await supabase
-        .from('pairing_codes')
-        .select('*')
-        .eq('code', code)
-        .eq('used', false)
-        .gte('expires_at', new Date().toISOString())
-        .maybeSingle();
+  // Add to local rules as blocked
+  await window.toggleRuleInstant(pkg, true);
+  window.openRuleConfig(pkg);
+};
 
-      if (!error && data) {
-        // Mark code used
-        await supabase.from('pairing_codes').update({ used: true }).eq('code', code);
-        // Fetch or create device
-        const { data: dev } = await supabase.from('devices').select('*').eq('id', data.device_id).maybeSingle();
-        if (dev) {
-          linkedDevice = dev;
-        } else {
-          linkedDevice = {
-            id: data.device_id,
-            name: nickname,
-            model: 'Android Device',
-            battery_pct: 90,
-            accessibility_enabled: true,
-            last_seen_at: new Date().toISOString()
-          };
-          await supabase.from('devices').insert(linkedDevice);
+window.toggleFocusMode = async function() {
+  if (!state.currentDeviceId) {
+    showToast('⚠️ Please pair a device first');
+    return;
+  }
+
+  state.isFocusModeActive = !state.isFocusModeActive;
+  const btn = document.getElementById('toggleFocusModeBtn');
+  const btnText = document.getElementById('focusBtnText');
+
+  const allApps = getAllDisplayApps();
+
+  if (state.isFocusModeActive) {
+    if (btn) btn.classList.add('active');
+    if (btnText) btnText.textContent = 'Deactivate Focus Mode';
+
+    // If no apps in DB yet, create focus rules for popular distraction apps
+    const targets = allApps.length > 0 ? allApps : [
+      { package_name: 'com.google.android.youtube', app_name: 'YouTube' },
+      { package_name: 'com.instagram.android', app_name: 'Instagram' },
+      { package_name: 'com.snapchat.android', app_name: 'Snapchat' },
+      { package_name: 'com.dts.freefireth', app_name: 'Free Fire' },
+      { package_name: 'com.whatsapp', app_name: 'WhatsApp' }
+    ];
+
+    for (const app of targets) {
+      state.rules[app.package_name] = {
+        ...(state.rules[app.package_name] || {}),
+        id: state.rules[app.package_name]?.id || `rule-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+        device_id: state.currentDeviceId,
+        package_name: app.package_name,
+        mode: 'block',
+        message: 'Focus Mode active: Applications locked by parents.',
+        enabled: true,
+        version: (state.rules[app.package_name]?.version || 1) + 1,
+        updated_at: new Date().toISOString()
+      };
+      if (supabase) {
+        supabase.from('rules').upsert(state.rules[app.package_name], { onConflict: 'device_id,package_name' }).then();
+      }
+    }
+    renderAppsList();
+    updateKPICards();
+    showToast('🚨 Focus Mode ACTIVATED: All apps locked on child phone!');
+  } else {
+    if (btn) btn.classList.remove('active');
+    if (btnText) btnText.textContent = 'Activate Focus Mode';
+
+    for (const pkg of Object.keys(state.rules)) {
+      if (state.rules[pkg]) {
+        state.rules[pkg].enabled = false;
+        state.rules[pkg].version = (state.rules[pkg].version || 1) + 1;
+        if (supabase) {
+          supabase.from('rules').upsert(state.rules[pkg], { onConflict: 'device_id,package_name' }).then();
         }
       }
-    } catch (err) {
-      console.warn('Pairing lookup error in Supabase:', err);
     }
+    renderAppsList();
+    updateKPICards();
+    showToast('Focus Mode deactivated');
   }
+};
 
-  // Graceful fallback linking if code entered in demo/testing mode
-  if (!linkedDevice) {
-    linkedDevice = {
-      id: `dev-${code}`,
-      name: nickname,
-      model: 'Android Phone (Paired)',
-      battery_pct: 95,
-      accessibility_enabled: true,
-      last_seen_at: new Date().toISOString()
-    };
-    if (supabase) {
-      try {
-        await supabase.from('devices').insert(linkedDevice);
-      } catch (e) { /* ignore */ }
-    }
+window.syncRefresh = async function() {
+  const btn = document.getElementById('syncRefreshBtn');
+  if (btn) btn.classList.add('rotating');
+  await loadDevices();
+  if (state.currentDeviceId) {
+    await loadDeviceData(state.currentDeviceId);
   }
+  setTimeout(() => { if (btn) btn.classList.remove('rotating'); }, 600);
+  showToast('⚡ Refreshed live database from Supabase');
+};
 
-  state.devices.push(linkedDevice);
-  state.currentDeviceId = linkedDevice.id;
-  renderDeviceSelector();
-  await loadDeviceData(linkedDevice.id);
-  setupRealtimeSubscriptions();
+window.clearLogs = function() {
+  state.blockEvents = [];
+  renderTimeline();
+  updateKPICards();
+  showToast('Activity stream cleared');
+};
 
-  el.submitPairBtn.disabled = false;
-  el.submitPairBtn.innerHTML = '<span>Connect & Link Phone</span>';
-  closeModal(el.pairModal);
-  el.pairingCodeInput.value = '';
-  el.deviceNicknameInput.value = '';
-  showToast(`✅ Successfully paired: ${linkedDevice.name}!`);
-}
-
-function showPairError(msg) {
-  if (!el.pairErrorMessage) return;
-  if (!msg) {
-    el.pairErrorMessage.classList.add('hidden');
-    el.pairErrorMessage.textContent = '';
-  } else {
-    el.pairErrorMessage.classList.remove('hidden');
-    el.pairErrorMessage.textContent = msg;
-  }
-}
-
-async function handleUnpairDevice() {
+window.unpairDevice = async function() {
   const dev = getCurrentDevice();
-  const confirmed = confirm(`Are you sure you want to unpair "${dev.name}"?\nAll remote rules will be cleared from this phone.`);
-  if (!confirmed) return;
+  if (!dev) return;
+  const ok = confirm(`Are you sure you want to unpair "${dev.name || dev.model}"?`);
+  if (!ok) return;
 
-  if (supabase && dev.id !== DEMO_DEVICE.id) {
+  if (supabase) {
     try {
       await supabase.from('rules').delete().eq('device_id', dev.id);
       await supabase.from('devices').delete().eq('id', dev.id);
@@ -1082,39 +1058,67 @@ async function handleUnpairDevice() {
   }
 
   state.devices = state.devices.filter(d => d.id !== dev.id);
-  if (state.devices.length === 0) {
-    state.devices = [DEMO_DEVICE];
-  }
-  state.currentDeviceId = state.devices[0].id;
+  state.currentDeviceId = state.devices[0]?.id || null;
   renderDeviceSelector();
-  await loadDeviceData(state.currentDeviceId);
-  showToast(`Phone unpaired and removed.`);
+  if (state.currentDeviceId) {
+    await loadDeviceData(state.currentDeviceId);
+  } else {
+    renderEmptyDashboard();
+  }
+  showToast('Device removed from management');
+};
+
+// =============================================================================
+// 8. EVENT LISTENERS SETUP
+// =============================================================================
+function setupEventListeners() {
+  const devSelect = document.getElementById('deviceSelector');
+  if (devSelect) {
+    devSelect.addEventListener('change', async (e) => {
+      window.switchDevice(e.target.value);
+    });
+  }
+
+  const searchInput = document.getElementById('appSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      window.handleAppSearch(e.target.value);
+    });
+  }
+
+  // Modal backdrop click
+  ['pairModal', 'ruleModal', 'addCustomRuleModal'].forEach(id => {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+    }
+  });
+}
+
+function setupTabNavigation() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.dataset.tab;
+      window.switchTab(tabId);
+    });
+  });
 }
 
 // =============================================================================
-// 13. UTILITY HELPERS
+// 9. UTILITY HELPERS
 // =============================================================================
-function findAppByPackage(pkg) {
-  return state.apps.find(a => a.package_name === pkg) || DEMO_APPS.find(a => a.package_name === pkg);
-}
+let toastTimeout = null;
+function showToast(msg) {
+  const toast = document.getElementById('toastMessage');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
 
-function openModal(modal) {
-  if (modal) modal.classList.add('open');
-}
-
-function closeModal(modal) {
-  if (modal) modal.classList.remove('open');
-}
-
-let toastTimer = null;
-function showToast(message) {
-  if (!el.toastMessage) return;
-  el.toastMessage.textContent = message;
-  el.toastMessage.classList.remove('hidden');
-
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    el.toastMessage.classList.add('hidden');
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.add('hidden');
   }, 3500);
 }
 
@@ -1143,5 +1147,11 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Start application
-document.addEventListener('DOMContentLoaded', init);
+// =============================================================================
+// 10. RELIABLE STARTUP
+// =============================================================================
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

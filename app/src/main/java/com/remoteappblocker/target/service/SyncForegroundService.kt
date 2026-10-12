@@ -60,6 +60,12 @@ class SyncForegroundService : Service() {
 
         // 1. Initial Sync
         serviceScope.launch {
+            try {
+                com.remoteappblocker.target.domain.scanner.InstalledAppsScanner(this@SyncForegroundService).scanAndCacheApps()
+                com.remoteappblocker.target.data.repository.PairingRepositoryImpl(this@SyncForegroundService, prefs, db).uploadInstalledApps()
+            } catch (e: Exception) {
+                Log.w(TAG, "Sync apps inventory notice: ${e.message}")
+            }
             syncEngine.syncRulesFromSupabase()
             syncEngine.sendHeartbeat()
         }

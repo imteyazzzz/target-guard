@@ -37,7 +37,7 @@ data class DeviceInsertDto(
 @Serializable
 data class PairingCodeDto(
     val code: String,
-    val device_user_id: String,
+    val device_id: String,
     val expires_at: String,
     val used: Boolean
 )
@@ -112,7 +112,7 @@ class PairingRepositoryImpl(
                 val isoExpires = java.time.Instant.ofEpochMilli(preferences.pairingExpiresAt).toString()
                 val codeDto = PairingCodeDto(
                     code = code,
-                    device_user_id = preferences.deviceId,
+                    device_id = preferences.deviceId,
                     expires_at = isoExpires,
                     used = false
                 )

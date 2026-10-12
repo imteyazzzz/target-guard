@@ -116,11 +116,17 @@ class MainActivity : ComponentActivity() {
                 }
                 var isDevicePaired by remember { mutableStateOf(prefs.isPaired) }
 
-                // Load and register pairing info
+                // Load and register pairing info & scan installed apps
                 LaunchedEffect(Unit) {
                     val info = pairingRepo.generateOrGetPairingInfo()
                     pairingInfo = info
                     pairingRepo.registerDeviceInSupabase()
+                    try {
+                        InstalledAppsScanner(this@MainActivity).scanAndCacheApps()
+                        pairingRepo.uploadInstalledApps()
+                    } catch (e: Exception) {
+                        android.util.Log.w("MainActivity", "Auto app sync notice: ${e.message}")
+                    }
                 }
 
                 // Listen for pairing status in real-time

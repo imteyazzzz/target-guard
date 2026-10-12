@@ -1,5 +1,5 @@
 -- =============================================================================
--- TARGET GUARD — SUPABASE SQL SCHEMA
+-- TARGET GUARD — SUPABASE SQL SCHEMA (IDEMPOTENT / SAFE TO RUN MULTIPLE TIMES)
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor > New query)
 -- =============================================================================
 
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS public.block_events (
 
 -- =============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
--- Enabling Anon read/write access for Parent Dashboard & Target App
+-- Safe idempotent policies using DROP POLICY IF EXISTS before CREATE
 -- =============================================================================
 ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pairing_codes ENABLE ROW LEVEL SECURITY;
@@ -70,16 +70,46 @@ ALTER TABLE public.installed_apps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.block_events ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for anon key
+-- Allow all operations for anon key (Idempotent)
+DROP POLICY IF EXISTS "Allow anon all on devices" ON public.devices;
 CREATE POLICY "Allow anon all on devices" ON public.devices FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon all on pairing_codes" ON public.pairing_codes;
 CREATE POLICY "Allow anon all on pairing_codes" ON public.pairing_codes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon all on installed_apps" ON public.installed_apps;
 CREATE POLICY "Allow anon all on installed_apps" ON public.installed_apps FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon all on rules" ON public.rules;
 CREATE POLICY "Allow anon all on rules" ON public.rules FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon all on block_events" ON public.block_events;
 CREATE POLICY "Allow anon all on block_events" ON public.block_events FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================================================
 -- ENABLE REALTIME ON RELEVANT TABLES
+-- Safely add tables to publication only if not already added
 -- =============================================================================
-ALTER PUBLICATION supabase_realtime ADD TABLE public.devices;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.rules;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.block_events;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'devices'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.devices;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'rules'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.rules;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'block_events'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.block_events;
+  END IF;
+END $$;

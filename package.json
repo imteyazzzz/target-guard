@@ -1,10 +1,11 @@
-{
+﻿{
   "name": "target-guard",
   "version": "1.0.0",
   "description": "Target Guard - Remote Parental Control & App Blocker System",
   "scripts": {
     "dev": "npx -y serve web -l 3000",
-    "start": "npx -y serve web -l 3000"
+    "start": "npx -y serve web -l 3000",
+    "release:apk": "powershell.exe -ExecutionPolicy Bypass -File ./scripts/release_apk.ps1"
   },
   "keywords": [
     "parental-control",

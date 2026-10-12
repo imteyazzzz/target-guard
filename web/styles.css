@@ -171,6 +171,26 @@ body {
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+.status-pill.offline {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.offline-dot {
+  width: 6px;
+  height: 6px;
+  background: #64748b;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-pill.unpaired {
+  background: rgba(244, 63, 94, 0.12);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+
 .pulse-dot {
   width: 6px;
   height: 6px;

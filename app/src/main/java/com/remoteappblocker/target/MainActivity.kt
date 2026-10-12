@@ -150,6 +150,11 @@ class MainActivity : ComponentActivity() {
                         onPinVerified = {
                             showUnpairPinDialog = false
                             scope.launch {
+                                try {
+                                    pairingRepo.unpairDevice()
+                                } catch (e: Exception) {
+                                    android.util.Log.w("MainActivity", "Unpair sync notice: ${e.message}")
+                                }
                                 prefs.isPaired = false
                                 prefs.pairingCode = null
                                 db.ruleDao().clearAllRules()

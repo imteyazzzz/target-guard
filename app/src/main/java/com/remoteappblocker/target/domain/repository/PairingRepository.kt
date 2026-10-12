@@ -10,4 +10,5 @@ interface PairingRepository {
     fun observePairingStatus(): Flow<Boolean>
     suspend fun confirmPaired(adminName: String)
     suspend fun uploadInstalledApps(): Result<Int>
+    suspend fun unpairDevice(): Result<Unit>
 }

@@ -67,6 +67,10 @@
     setupEventListeners();
     startRollingPinTimer();
 
+    // Live status tickers (auto-evaluates online/offline & DB sync every few seconds)
+    setInterval(updateDeviceStatusPill, 3000);
+    setInterval(loadDevicesSilently, 8000);
+
     // Load real data from Supabase
     await loadDevices();
     if (state.currentDeviceId) {
@@ -120,9 +124,41 @@
     }
   }
 
+  async function loadDevicesSilently() {
+    try {
+      let data = null;
+      if (supabaseClient) {
+        try {
+          const res = await supabaseClient
+            .from('devices')
+            .select('*')
+            .order('last_seen_at', { ascending: false });
+          if (!res.error && res.data) data = res.data;
+        } catch (_) {}
+      }
+      if (!data) {
+        data = await apiFetch('devices?select=*&order=last_seen_at.desc');
+      }
+      if (Array.isArray(data)) {
+        state.devices = data;
+        if (state.devices.length > 0) {
+          if (!state.currentDeviceId || !state.devices.find(d => d.id === state.currentDeviceId)) {
+            state.currentDeviceId = state.devices[0].id;
+            loadDeviceData(state.currentDeviceId);
+          }
+        } else {
+          if (state.currentDeviceId) {
+            state.currentDeviceId = null;
+            renderEmptyDashboard();
+          }
+        }
+        renderDeviceSelector();
+      }
+    } catch (_) {}
+  }
+
   function renderDeviceSelector() {
     const sel = document.getElementById('deviceSelector');
-    const pill = document.getElementById('deviceStatusPill');
     if (!sel) return;
 
     sel.innerHTML = '';
@@ -132,12 +168,7 @@
       opt.value = '';
       opt.textContent = 'No Devices Paired';
       sel.appendChild(opt);
-      if (pill) {
-        pill.className = 'status-pill';
-        pill.style.background = 'rgba(255,255,255,0.06)';
-        pill.style.color = 'var(--text-dim)';
-        pill.innerHTML = 'Not Connected';
-      }
+      updateDeviceStatusPill();
       return;
     }
 
@@ -152,11 +183,33 @@
       sel.value = state.currentDeviceId;
     }
 
-    if (pill) {
-      const cur = getCurrentDevice();
-      const isRecent = cur && cur.last_seen_at && (Date.now() - new Date(cur.last_seen_at).getTime() < 1000 * 60 * 60 * 24);
-      pill.className = isRecent ? 'status-pill online' : 'status-pill';
-      pill.innerHTML = isRecent ? '<span class="pulse-dot"></span> Online' : '<span style="color:var(--text-dim)">Offline</span>';
+    updateDeviceStatusPill();
+  }
+
+  function updateDeviceStatusPill() {
+    const pill = document.getElementById('deviceStatusPill');
+    if (!pill) return;
+
+    const cur = getCurrentDevice();
+    if (!cur) {
+      pill.className = 'status-pill offline';
+      pill.innerHTML = '<span class="offline-dot"></span> Not Connected';
+      return;
+    }
+
+    // A phone is truly ONLINE only if its live heartbeat was reported within the last 60 seconds (1 minute).
+    // If phone unpairs, turns off, or stops sync, it automatically flips to Offline without manual refresh.
+    const ONLINE_THRESHOLD_MS = 60 * 1000;
+    const lastSeenTime = cur.last_seen_at ? new Date(cur.last_seen_at).getTime() : 0;
+    const diffMs = lastSeenTime > 0 ? (Date.now() - lastSeenTime) : Infinity;
+    const isOnline = diffMs >= 0 && diffMs < ONLINE_THRESHOLD_MS;
+
+    if (isOnline) {
+      pill.className = 'status-pill online';
+      pill.innerHTML = '<span class="pulse-dot"></span> Online';
+    } else {
+      pill.className = 'status-pill offline';
+      pill.innerHTML = '<span class="offline-dot"></span> Offline';
     }
   }
 
@@ -666,11 +719,40 @@
           showToast(`🚨 Block alert: Launch intercepted on phone!`);
         }
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'devices' }, payload => {
-        if (payload.new && payload.new.id === state.currentDeviceId) {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'devices' }, payload => {
+        console.log('📱 Devices table realtime event:', payload.eventType, payload);
+        if (payload.eventType === 'DELETE') {
+          const delId = payload.old?.id;
+          state.devices = state.devices.filter(d => d.id !== delId);
+          if (state.currentDeviceId === delId) {
+            state.currentDeviceId = state.devices[0]?.id || null;
+            renderDeviceSelector();
+            if (state.currentDeviceId) {
+              loadDeviceData(state.currentDeviceId);
+            } else {
+              renderEmptyDashboard();
+            }
+            showToast('📱 Device unlinked from child phone');
+          } else {
+            renderDeviceSelector();
+          }
+        } else if (payload.eventType === 'UPDATE') {
           const idx = state.devices.findIndex(d => d.id === payload.new.id);
-          if (idx !== -1) state.devices[idx] = { ...state.devices[idx], ...payload.new };
+          if (idx !== -1) {
+            state.devices[idx] = { ...state.devices[idx], ...payload.new };
+          }
+          renderDeviceSelector();
           updateKPICards();
+        } else if (payload.eventType === 'INSERT') {
+          if (!state.devices.find(d => d.id === payload.new.id)) {
+            state.devices.unshift(payload.new);
+            if (!state.currentDeviceId) {
+              state.currentDeviceId = payload.new.id;
+              loadDeviceData(state.currentDeviceId);
+            }
+            renderDeviceSelector();
+            showToast(`📱 New device connected: ${payload.new.name || 'Android'}`);
+          }
         }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'installed_apps' }, payload => {
@@ -1299,12 +1381,14 @@
   }
 
   function formatTimeAgo(isoString) {
-    if (!isoString) return 'Just now';
+    if (!isoString) return 'Offline';
     const diffSec = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
-    if (diffSec < 45) return 'Just now';
-    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-    return `${Math.floor(diffSec / 86400)}d ago`;
+    if (diffSec < 0) return 'Just now';
+    if (diffSec < 45) return 'Just now (Online)';
+    if (diffSec < 60) return `${diffSec}s ago`;
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago (Offline)`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago (Offline)`;
+    return `${Math.floor(diffSec / 86400)}d ago (Offline)`;
   }
 
   function renderDaysShort(daysArr) {

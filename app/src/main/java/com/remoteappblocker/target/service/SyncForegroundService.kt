@@ -73,10 +73,10 @@ class SyncForegroundService : Service() {
         // 2. Realtime WebSocket Subscription & Polling
         syncEngine.startRealtimeSubscription(serviceScope)
 
-        // 3. Periodic 15-Minute Heartbeat Loop
+        // 3. Periodic 25-Second Live Heartbeat Loop (Ensures realtime Online/Offline status)
         serviceScope.launch {
             while (isActive) {
-                delay(15 * 60 * 1000L) // 15 mins
+                delay(25 * 1000L) // 25 seconds
                 syncEngine.sendHeartbeat()
                 syncEngine.uploadPendingBlockEvents()
             }

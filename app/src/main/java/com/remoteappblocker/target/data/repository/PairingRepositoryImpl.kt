@@ -131,22 +131,25 @@ class PairingRepositoryImpl(
         while (!preferences.isPaired) {
             try {
                 val client = SupabaseClientProvider.client
-                // Poll check device pairing state
-                val response = client.from("devices").select {
-                    filter {
-                        eq("id", preferences.deviceId)
+                val code = preferences.pairingCode
+                if (code != null) {
+                    val response = client.from("pairing_codes").select {
+                        filter {
+                            eq("code", code)
+                            eq("used", true)
+                        }
                     }
-                }
-                val rawText = response.data
-                if (rawText.contains("admin_id") && !rawText.contains("\"admin_id\":null")) {
-                    preferences.isPaired = true
-                    emit(true)
-                    break
+                    val rawText = response.data
+                    if (rawText.length > 5 && !rawText.contains("[]")) {
+                        preferences.isPaired = true
+                        emit(true)
+                        break
+                    }
                 }
             } catch (e: Exception) {
                 // Ignore transient network errors
             }
-            delay(3000L) // Poll interval
+            delay(2000L) // Poll interval
         }
         if (preferences.isPaired) {
             emit(true)
@@ -180,6 +183,38 @@ class PairingRepositoryImpl(
             Result.success(dtoList.size)
         } catch (e: Exception) {
             Log.w(TAG, "App inventory upload notice: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun unpairDevice(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val client = SupabaseClientProvider.client
+            val devId = preferences.deviceId
+
+            // 1. Clear remote rules & installed apps
+            try {
+                client.from("rules").delete { filter { eq("device_id", devId) } }
+            } catch (_: Exception) {}
+            try {
+                client.from("installed_apps").delete { filter { eq("device_id", devId) } }
+            } catch (_: Exception) {}
+            try {
+                client.from("pairing_codes").delete { filter { eq("device_id", devId) } }
+            } catch (_: Exception) {}
+
+            // 2. Set last_seen_at = null on device so web portal immediately turns Offline/Unpaired
+            val payload = buildJsonObject {
+                put("last_seen_at", kotlinx.serialization.json.JsonNull)
+            }
+            client.from("devices").update(payload) {
+                filter { eq("id", devId) }
+            }
+
+            Log.i(TAG, "Device $devId successfully unpaired & notified to Supabase")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.w(TAG, "Unpair notification error: ${e.message}")
             Result.failure(e)
         }
     }

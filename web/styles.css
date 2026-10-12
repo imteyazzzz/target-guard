@@ -953,16 +953,114 @@ input:checked + .slider:before {
   justify-content: space-between;
 }
 
-.pin-display {
+.admin-item.pin-admin-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.pin-info-side {
+  flex: 1;
+  min-width: 220px;
+}
+
+.pin-countdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.countdown-text {
+  font-size: 0.8rem;
   font-family: var(--font-mono);
-  font-size: 1.2rem;
-  font-weight: 800;
-  background: var(--bg-elevated);
-  padding: 6px 16px;
+  font-weight: 600;
+  color: var(--accent-emerald);
+}
+
+.countdown-text.expiring {
+  color: var(--accent-rose);
+}
+
+.pin-progress-track {
+  width: 90px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pin-progress-bar {
+  height: 100%;
+  background: var(--accent-emerald);
+  transition: width 1s linear, background-color 0.3s ease;
+}
+
+.pin-progress-bar.expiring {
+  background: var(--accent-rose);
+}
+
+.pin-display-side {
+  display: flex;
+  align-items: center;
+}
+
+.pin-display-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  padding: 6px 8px 6px 16px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.pin-display.rolling-pin {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
   color: #60a5fa;
-  letter-spacing: 2px;
+  letter-spacing: 5px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.btn-copy-pin {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-copy-pin:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.timer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  display: inline-block;
+  box-shadow: 0 0 8px var(--accent-emerald);
+}
+
+.timer-dot.expiring {
+  background: var(--accent-rose);
+  box-shadow: 0 0 8px var(--accent-rose);
 }
 
 .divider {

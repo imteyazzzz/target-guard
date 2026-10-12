@@ -292,12 +292,29 @@
           <h3 class="card-title">Device Remote Administration</h3>
           <p class="card-desc">Safety configuration and unpair options.</p>
           <div class="admin-action-box">
-            <div class="admin-item">
-              <div>
-                <strong>Default Admin PIN</strong>
-                <p>Required on target device to unpair or disable protection</p>
+            <div class="admin-item pin-admin-item">
+              <div class="pin-info-side">
+                <strong>Dynamic Rolling Admin PIN (1-Min Expiry)</strong>
+                <p>Har phone ke liye alag PIN. Phone pe unpair ya settings change karne ke liye enter karein.</p>
+                <div class="pin-countdown-row">
+                  <span id="pinTimerDot" class="timer-dot"></span>
+                  <span id="pinExpiryCountdownText" class="countdown-text">Expires in 60s</span>
+                  <div class="pin-progress-track">
+                    <div id="pinProgressBar" class="pin-progress-bar" style="width: 100%;"></div>
+                  </div>
+                </div>
               </div>
-              <div class="pin-display">1234</div>
+              <div class="pin-display-side">
+                <div class="pin-display-wrap">
+                  <span id="rollingAdminPinDisplay" class="pin-display rolling-pin">----</span>
+                  <button id="copyPinBtn" class="btn-copy-pin" onclick="window.copyAdminPin()" title="Copy PIN">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
             <hr class="divider">
             <div class="danger-zone">

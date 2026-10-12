@@ -47,9 +47,10 @@ import com.remoteappblocker.target.presentation.theme.Slate800
 
 @Composable
 fun AdminPinDialog(
-    correctPin: String = "1234",
+    deviceId: String = "",
+    masterPin: String = "1234",
     title: String = "Admin Authentication",
-    subtitle: String = "Enter 4-digit PIN to proceed",
+    subtitle: String = "Enter 1-minute Admin PIN from Parent Portal",
     onDismissRequest: () -> Unit,
     onPinVerified: () -> Unit
 ) {
@@ -133,7 +134,7 @@ fun AdminPinDialog(
                 if (isError) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Incorrect PIN. Default is 1234",
+                        text = "Incorrect or expired PIN. Check live PIN on Web Portal.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = AlertRed,
                         fontSize = 12.sp
@@ -151,7 +152,12 @@ fun AdminPinDialog(
                             isError = false
 
                             if (newPin.length == 4) {
-                                if (newPin == correctPin) {
+                                val isValid = com.remoteappblocker.target.domain.pin.DynamicAdminPinHelper.isValidPin(
+                                    enteredPin = newPin,
+                                    deviceId = deviceId,
+                                    masterPin = masterPin
+                                )
+                                if (isValid) {
                                     onPinVerified()
                                 } else {
                                     isError = true

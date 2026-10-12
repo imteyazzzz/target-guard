@@ -143,9 +143,10 @@ class MainActivity : ComponentActivity() {
 
                 if (showUnpairPinDialog) {
                     com.remoteappblocker.target.presentation.pin.AdminPinDialog(
-                        correctPin = prefs.adminPin ?: "1234",
+                        deviceId = prefs.deviceId,
+                        masterPin = prefs.adminPin ?: "1234",
                         title = "Unpair Device",
-                        subtitle = "Enter 4-digit Admin PIN to remove management",
+                        subtitle = "Enter 1-minute Admin PIN shown on Parent Web Portal",
                         onDismissRequest = { showUnpairPinDialog = false },
                         onPinVerified = {
                             showUnpairPinDialog = false

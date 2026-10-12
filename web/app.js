@@ -65,6 +65,7 @@
     console.log('🚀 Initializing Target Guard Dashboard...');
     setupTabNavigation();
     setupEventListeners();
+    startRollingPinTimer();
 
     // Load real data from Supabase
     await loadDevices();
@@ -345,7 +346,87 @@
 
     const totalAppCount = Math.max(state.apps.length, Object.keys(state.rules).length);
     if (appsCountBadge) appsCountBadge.textContent = totalAppCount;
+
+    updateRollingPinUI();
   }
+
+  // =============================================================================
+  // DYNAMIC 1-MINUTE ROLLING ADMIN PIN (TOTP)
+  // =============================================================================
+  function generateRollingPin(deviceId, timeOffsetMinutes = 0) {
+    if (!deviceId) return '----';
+    const timeBucket = Math.floor(Date.now() / 60000) + timeOffsetMinutes;
+    const input = `${deviceId}:${timeBucket}:target_guard_admin_salt`;
+
+    let hash = -2128831035;
+    for (let i = 0; i < input.length; i++) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    const pinNum = Math.abs(hash) % 10000;
+    return String(pinNum).padStart(4, '0');
+  }
+
+  let rollingPinInterval = null;
+  function updateRollingPinUI() {
+    const pinDisplay = document.getElementById('rollingAdminPinDisplay');
+    const timerText = document.getElementById('pinExpiryCountdownText');
+    const progressBar = document.getElementById('pinProgressBar');
+    const timerDot = document.getElementById('pinTimerDot');
+
+    if (!state.currentDeviceId) {
+      if (pinDisplay) pinDisplay.textContent = '----';
+      if (timerText) timerText.textContent = 'Awaiting phone';
+      if (progressBar) progressBar.style.width = '0%';
+      return;
+    }
+
+    const pin = generateRollingPin(state.currentDeviceId);
+    const nowSec = Math.floor(Date.now() / 1000);
+    const secondsRemaining = 60 - (nowSec % 60);
+    const pct = Math.max(0, Math.min(100, (secondsRemaining / 60) * 100));
+
+    if (pinDisplay) pinDisplay.textContent = pin;
+    if (timerText) {
+      timerText.textContent = `Expires in ${secondsRemaining}s`;
+      if (secondsRemaining <= 10) timerText.classList.add('expiring');
+      else timerText.classList.remove('expiring');
+    }
+    if (progressBar) {
+      progressBar.style.width = `${pct}%`;
+      if (secondsRemaining <= 10) progressBar.classList.add('expiring');
+      else progressBar.classList.remove('expiring');
+    }
+    if (timerDot) {
+      if (secondsRemaining <= 10) timerDot.classList.add('expiring');
+      else timerDot.classList.remove('expiring');
+    }
+  }
+
+  function startRollingPinTimer() {
+    if (rollingPinInterval) clearInterval(rollingPinInterval);
+    updateRollingPinUI();
+    rollingPinInterval = setInterval(updateRollingPinUI, 1000);
+  }
+
+  window.copyAdminPin = function() {
+    if (!state.currentDeviceId) {
+      showToast('⚠️ Please select a paired phone first');
+      return;
+    }
+    const pin = generateRollingPin(state.currentDeviceId);
+    const secondsRemaining = 60 - (Math.floor(Date.now() / 1000) % 60);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(pin).then(() => {
+        showToast(`📋 Admin PIN copied: ${pin} (Valid for ${secondsRemaining}s)`);
+      }).catch(() => {
+        showToast(`📋 Admin PIN: ${pin} (Valid for ${secondsRemaining}s)`);
+      });
+    } else {
+      showToast(`📋 Admin PIN: ${pin} (Valid for ${secondsRemaining}s)`);
+    }
+  };
 
   function getAllDisplayApps() {
     const appMap = new Map();

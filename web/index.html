@@ -48,6 +48,14 @@
       <div id="realtimeStatus" class="connection-badge connected">
         <span class="conn-dot"></span> Realtime Active
       </div>
+            <a href="https://github.com/imteyazzzzz/target-guard/releases/latest/download/TargetGuard.apk" class="btn btn-secondary btn-sm" title="Download latest Android APK directly" target="_blank" download="TargetGuard.apk" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download APK
+      </a>
       <button id="openPairModalBtn" class="btn btn-primary btn-sm" onclick="window.openPairModal()">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
@@ -59,7 +67,36 @@
   </header>
 
   <!-- Main Dashboard Container -->
-  <main class="dashboard-container">
+    <main class="dashboard-container">
+
+    <!-- UNLINKED DEVICE NOTICE BANNER (shown when selected device is not paired) -->
+    <div id="unlinkedDeviceBanner" class="unlinked-banner-box hidden">
+      <div class="unlinked-banner-content">
+        <div class="unlinked-icon-wrap">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </div>
+        <div class="unlinked-text-wrap" style="flex: 1;">
+          <div class="unlinked-badge">⚠️ PHONE NOT LINKED</div>
+          <h3 class="unlinked-title">This Phone is Currently Unlinked / Disconnected</h3>
+          <p class="unlinked-desc">
+            <strong id="unlinkedDeviceName" style="color: #60a5fa;">Target Phone</strong> parent portal se linked nahi hai. App blocking rules aur focus mode tab tak inactive rahenge jab tak aap phone ko 6-digit code daal kar link nahi karte.
+          </p>
+          <div class="unlinked-input-row">
+            <input type="text" id="quickLinkCodeInput" maxlength="6" placeholder="e.g. 172086" class="quick-link-input" />
+            <button class="btn btn-primary" id="quickLinkSubmitBtn" onclick="window.submitQuickLink()">
+              🔗 Link & Activate Phone
+            </button>
+          </div>
+          <div id="quickLinkError" class="error-banner hidden" style="margin-top: 10px;"></div>
+          <div class="unlinked-help">
+            💡 Child ke phone me Target Guard app open karein, wahan screen par dikh raha 6-Digit code yahan enter karein. Code enter karte hi phone turant activate ho jayega.
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- KPI / Quick Stats Row -->
     <section class="kpi-grid">

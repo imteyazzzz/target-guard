@@ -1,6 +1,6 @@
 ﻿$ErrorActionPreference = "Stop"
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host " Building Target Guard APK and Updating GitHub Release " -ForegroundColor Cyan
+Write-Host " Building Target Guard APK (Local Server Mode) " -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 
 $rootDir = Split-Path -Parent $PSScriptRoot
@@ -19,10 +19,7 @@ Write-Host "2. Copying APK to root and web directory..." -ForegroundColor Yellow
 Copy-Item $sourceApk "TargetGuard.apk" -Force
 Copy-Item $sourceApk "web\TargetGuard.apk" -Force
 
-Write-Host "3. Uploading TargetGuard.apk to GitHub Release v1.0.0..." -ForegroundColor Yellow
-gh release upload v1.0.0 "TargetGuard.apk" --clobber
-
 Write-Host ""
-Write-Host " SUCCESS! APK updated and uploaded to GitHub!" -ForegroundColor Green
-Write-Host "Direct Download URL:" -ForegroundColor Cyan
-Write-Host "https://github.com/imteyazzzz/target-guard/releases/latest/download/TargetGuard.apk" -ForegroundColor Green
+Write-Host " SUCCESS! APK built and ready in Web Portal!" -ForegroundColor Green
+Write-Host "Direct Download URL (Web Portal):" -ForegroundColor Cyan
+Write-Host "http://localhost:3000/TargetGuard.apk" -ForegroundColor Green

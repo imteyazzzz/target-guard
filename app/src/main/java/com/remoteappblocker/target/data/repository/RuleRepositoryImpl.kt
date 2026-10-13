@@ -1,4 +1,4 @@
-package com.remoteappblocker.target.data.repository
+﻿package com.remoteappblocker.target.data.repository
 
 import com.remoteappblocker.target.data.local.AppDatabase
 import com.remoteappblocker.target.data.local.DevicePreferences
@@ -33,7 +33,10 @@ class RuleRepositoryImpl(
 
     override suspend fun saveRules(rules: List<Rule>) = withContext(Dispatchers.IO) {
         val entities = rules.map { RuleEntity.fromDomain(it) }
-        database.ruleDao().insertOrUpdateRules(entities)
+        database.ruleDao().clearAllRules()
+        if (entities.isNotEmpty()) {
+            database.ruleDao().insertOrUpdateRules(entities)
+        }
     }
 
     override suspend fun saveRule(rule: Rule) = withContext(Dispatchers.IO) {

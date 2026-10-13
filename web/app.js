@@ -375,7 +375,7 @@
     }
     if (activeRulesCount) activeRulesCount.textContent = '0';
     if (interceptedCount) interceptedCount.textContent = '0';
-    if (appsCountBadge) appsCountBadge.textContent = '0';
+    if (appsCountBadge) appsCountBadge.textContent = '0 Blocked';
 
     if (appsListContainer) {
       appsListContainer.innerHTML = `
@@ -445,8 +445,7 @@
     if (activeRulesCount) activeRulesCount.textContent = activeCount;
     if (interceptedCount) interceptedCount.textContent = state.blockEvents.length;
 
-    const totalAppCount = Math.max(state.apps.length, Object.keys(state.rules).length);
-    if (appsCountBadge) appsCountBadge.textContent = totalAppCount;
+    if (appsCountBadge) appsCountBadge.textContent = `${activeCount} Blocked`;
 
     updateRollingPinUI();
   }
@@ -1347,12 +1346,21 @@
       if (btn) btn.classList.add('active');
       if (btnText) btnText.textContent = 'Deactivate Focus Mode';
 
-      const targets = allApps.length > 0 ? allApps : [
+      const distractionKeywords = [
+        'youtube', 'instagram', 'facebook', 'snapchat', 'tiktok', 'twitter', 'netflix', 
+        'primevideo', 'hotstar', 'twitch', 'freefire', 'pubg', 'roblox', 'game', 'play'
+      ];
+      const matched = allApps.filter(app => {
+        const pkg = (app.package_name || '').toLowerCase();
+        const name = (app.app_name || '').toLowerCase();
+        return distractionKeywords.some(kw => pkg.includes(kw) || name.includes(kw));
+      });
+      const targets = matched.length > 0 ? matched : [
         { package_name: 'com.google.android.youtube', app_name: 'YouTube' },
         { package_name: 'com.instagram.android', app_name: 'Instagram' },
         { package_name: 'com.snapchat.android', app_name: 'Snapchat' },
-        { package_name: 'com.dts.freefireth', app_name: 'Free Fire' },
-        { package_name: 'com.whatsapp', app_name: 'WhatsApp' }
+        { package_name: 'com.facebook.katana', app_name: 'Facebook' },
+        { package_name: 'com.dts.freefireth', app_name: 'Free Fire' }
       ];
 
       for (const app of targets) {
@@ -1364,6 +1372,7 @@
           mode: 'block',
           message: 'Focus Mode active: Applications locked by parents.',
           enabled: true,
+          is_focus_rule: true,
           version: (state.rules[app.package_name]?.version || 1) + 1,
           updated_at: new Date().toISOString()
         };
@@ -1387,8 +1396,9 @@
       if (btnText) btnText.textContent = 'Activate Focus Mode';
 
       for (const pkg of Object.keys(state.rules)) {
-        if (state.rules[pkg]) {
+        if (state.rules[pkg] && state.rules[pkg].is_focus_rule) {
           state.rules[pkg].enabled = false;
+          state.rules[pkg].is_focus_rule = false;
           state.rules[pkg].version = (state.rules[pkg].version || 1) + 1;
           try {
             if (supabaseClient) {

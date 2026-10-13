@@ -1,4 +1,4 @@
-# 🛡️ Target Guard — Remote Parental Control & App Blocker
+﻿# 🛡️ Target Guard — Remote Parental Control & App Blocker
 
 A complete, production-grade **Remote Parental Control and App Blocking Platform** featuring an ultra-low latency Android Target App and a real-time Parent Web Management Dashboard powered by **Supabase Realtime**.
 
@@ -106,7 +106,7 @@ Prerequisites: Android SDK 34, JDK 17.
 
 ```bash
 # Clone the repository
-git clone https://github.com/imteyazzzzz/target-guard.git
+git clone https://github.com/imteyazzzz/target-guard.git
 cd target-guard
 
 # Build the Debug APK

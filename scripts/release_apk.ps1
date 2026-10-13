@@ -25,4 +25,4 @@ gh release upload v1.0.0 "TargetGuard.apk" --clobber
 Write-Host ""
 Write-Host " SUCCESS! APK updated and uploaded to GitHub!" -ForegroundColor Green
 Write-Host "Direct Download URL:" -ForegroundColor Cyan
-Write-Host "https://github.com/imteyazzzzz/target-guard/releases/latest/download/TargetGuard.apk" -ForegroundColor Green
+Write-Host "https://github.com/imteyazzzz/target-guard/releases/latest/download/TargetGuard.apk" -ForegroundColor Green
